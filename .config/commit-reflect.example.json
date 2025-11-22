@@ -1,0 +1,50 @@
+{
+  "$schema": "./commit-reflect.schema.json",
+  "storage": ["jsonl", "database"],
+  "jsonl_path": ".commit-reflections.jsonl",
+  "db_path": "~/.commit-reflect/reflections.db",
+  "amend_commit": false,
+  "questions": [
+    {
+      "id": "ai_synergy",
+      "prompt": "How well did you and AI work together on this?",
+      "type": "scale",
+      "range": [1, 5],
+      "optional": false,
+      "help_text": "1 = AI hindered progress, 5 = Perfect collaboration"
+    },
+    {
+      "id": "confidence",
+      "prompt": "How confident are you in these changes?",
+      "type": "scale",
+      "range": [1, 5],
+      "optional": false,
+      "help_text": "1 = Needs review, 5 = Production ready"
+    },
+    {
+      "id": "experience",
+      "prompt": "How did this work feel? What was the experience like?",
+      "type": "text",
+      "max_length": 512,
+      "optional": false,
+      "help_text": "Describe your development experience in 512 characters or less"
+    },
+    {
+      "id": "blockers",
+      "prompt": "What blockers or friction did you encounter?",
+      "type": "text",
+      "optional": true,
+      "help_text": "Press Enter to skip if no blockers"
+    },
+    {
+      "id": "learning",
+      "prompt": "What did you learn from this work?",
+      "type": "text",
+      "optional": true,
+      "help_text": "Press Enter to skip if nothing notable"
+    }
+  ],
+  "session_timeout_minutes": 30,
+  "enable_progress_indicator": true,
+  "show_commit_context": true
+}

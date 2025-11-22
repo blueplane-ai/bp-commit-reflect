@@ -1,0 +1,55 @@
+{
+  "storage": ["jsonl", "database", "git"],
+  "jsonl_path": ".commit-reflections.jsonl",
+  "db_path": "~/.commit-reflect/reflections.db",
+  "amend_commit": true,
+  "questions": [
+    {
+      "id": "ai_synergy",
+      "prompt": "Rate AI collaboration quality",
+      "type": "scale",
+      "range": [1, 5],
+      "optional": false,
+      "help_text": "1=Poor, 5=Excellent"
+    },
+    {
+      "id": "confidence",
+      "prompt": "Rate confidence in changes",
+      "type": "scale",
+      "range": [1, 5],
+      "optional": false,
+      "help_text": "1=Needs review, 5=Production ready"
+    },
+    {
+      "id": "experience",
+      "prompt": "Describe your experience",
+      "type": "text",
+      "max_length": 512,
+      "optional": false
+    },
+    {
+      "id": "blockers",
+      "prompt": "Any blockers encountered?",
+      "type": "text",
+      "optional": true
+    },
+    {
+      "id": "learning",
+      "prompt": "What did you learn?",
+      "type": "text",
+      "optional": true
+    },
+    {
+      "id": "velocity",
+      "prompt": "How would you rate your velocity?",
+      "type": "scale",
+      "range": [1, 5],
+      "optional": true,
+      "help_text": "1=Very slow, 5=Very fast"
+    }
+  ],
+  "session_timeout_minutes": 45,
+  "enable_progress_indicator": true,
+  "show_commit_context": true,
+  "color_output": true
+}
