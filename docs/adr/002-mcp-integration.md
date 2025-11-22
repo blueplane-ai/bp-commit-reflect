@@ -118,24 +118,9 @@ Implement as slash commands or chat commands in each IDE without MCP.
 - Less natural conversational experience
 - Limited to IDEs that support custom commands
 
-### Python-based MCP SDK
-
-Use Python MCP SDK instead of Node.js/TypeScript.
-
-**Pros:**
-- Python MCP SDK is well-documented
-- Strong data processing libraries
-- Good CLI tooling ecosystem
-
-**Cons:**
-- Creates language mismatch with likely Node.js/TypeScript CLI
-- Harder for JavaScript developers to contribute
-- Python deployment/versioning complexity
-- Node.js more common in developer tooling
-
 ## References
 
 - [Model Context Protocol Documentation](https://modelcontextprotocol.io/)
 - [Anthropic MCP Announcement](https://www.anthropic.com/news/model-context-protocol)
-- [MCP TypeScript SDK](https://github.com/anthropics/mcp-typescript-sdk)
+- [MCP Python SDK](https://github.com/anthropics/mcp-python-sdk)
 - ADR-001: CLI-First Architecture

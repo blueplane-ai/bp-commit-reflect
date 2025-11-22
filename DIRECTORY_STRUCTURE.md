@@ -4,11 +4,11 @@ This document describes the high-level directory structure of the Commit Reflect
 
 ## Overview
 
-The project is organized as a monorepo using workspaces, with three main components (CLI, MCP Server, IDE Hooks) sharing common code through the `shared` package.
+The project is organized as a monorepo with three main components (CLI, MCP Server, IDE Hooks) sharing common code through the `shared` package.
 
 ```
 ai-commit-reflect/
-├── packages/              # Monorepo packages
+├── packages/              # Python packages
 ├── docs/                  # Documentation
 ├── examples/              # Example configurations and usage
 ├── tests/                 # Shared test infrastructure
@@ -18,83 +18,85 @@ ai-commit-reflect/
 
 ## Detailed Structure
 
-### `/packages` - Monorepo Packages
+### `/packages` - Python Packages
 
-Contains all installable packages as npm workspaces.
+Contains all installable Python packages.
 
 ```
 packages/
-├── cli/                           # @blueplane/commit-reflect
+├── cli/                           # commit-reflect CLI
 │   ├── src/
-│   │   ├── index.ts               # CLI entry point and argument parsing
-│   │   ├── session.ts             # ReflectionSession class (core logic)
-│   │   ├── prompts.ts             # Interactive question prompting
-│   │   ├── config.ts              # Configuration file loading and validation
-│   │   ├── validators.ts          # Input validation functions
-│   │   └── utils.ts               # Utility functions
-│   ├── bin/
-│   │   └── commit-reflect.js      # Executable script
+│   │   ├── __init__.py
+│   │   ├── __main__.py            # CLI entry point and argument parsing
+│   │   ├── session.py             # ReflectionSession class (core logic)
+│   │   ├── prompts.py             # Interactive question prompting
+│   │   ├── config.py              # Configuration file loading and validation
+│   │   ├── validators.py          # Input validation functions
+│   │   └── utils.py               # Utility functions
 │   ├── tests/
-│   │   ├── session.test.ts
-│   │   ├── prompts.test.ts
-│   │   └── config.test.ts
-│   ├── package.json
-│   ├── tsconfig.json
+│   │   ├── test_session.py
+│   │   ├── test_prompts.py
+│   │   └── test_config.py
+│   ├── pyproject.toml
+│   ├── setup.py
 │   └── README.md
 │
-├── mcp-server/                    # @blueplane/mcp-commit-reflect
+├── mcp-server/                    # mcp-commit-reflect server
 │   ├── src/
-│   │   ├── index.ts               # MCP server entry point
-│   │   ├── server.ts              # MCP server implementation
+│   │   ├── __init__.py
+│   │   ├── __main__.py            # MCP server entry point
+│   │   ├── server.py              # MCP server implementation
 │   │   ├── tools/                 # MCP tool implementations
-│   │   │   ├── start-reflection.ts
-│   │   │   ├── answer-question.ts
-│   │   │   ├── complete-reflection.ts
-│   │   │   ├── cancel-reflection.ts
-│   │   │   └── get-reflections.ts
-│   │   ├── process-manager.ts     # CLI process lifecycle management
-│   │   └── types.ts               # MCP-specific types
+│   │   │   ├── __init__.py
+│   │   │   ├── start_reflection.py
+│   │   │   ├── answer_question.py
+│   │   │   ├── complete_reflection.py
+│   │   │   ├── cancel_reflection.py
+│   │   │   └── get_reflections.py
+│   │   ├── process_manager.py     # CLI process lifecycle management
+│   │   └── types.py               # MCP-specific types
 │   ├── tests/
-│   │   ├── server.test.ts
-│   │   ├── tools.test.ts
-│   │   └── process-manager.test.ts
-│   ├── package.json
-│   ├── tsconfig.json
+│   │   ├── test_server.py
+│   │   ├── test_tools.py
+│   │   └── test_process_manager.py
+│   ├── pyproject.toml
+│   ├── setup.py
 │   └── README.md
 │
 ├── ide-hooks/                     # IDE integration hooks
 │   ├── claude-code/
-│   │   ├── post-tool-use.js       # Claude Code PostToolUse hook
-│   │   ├── README.md              # Installation and usage guide
-│   │   └── package.json
+│   │   ├── post_tool_use.py       # Claude Code PostToolUse hook
+│   │   └── README.md              # Installation and usage guide
 │   ├── cursor/
-│   │   ├── afterShellExecution.ts # Cursor shell execution hook
-│   │   ├── README.md              # Installation and usage guide
-│   │   └── package.json
+│   │   ├── after_shell_execution.py  # Cursor shell execution hook
+│   │   └── README.md              # Installation and usage guide
 │   └── README.md                  # General IDE hooks overview
 │
-└── shared/                        # @blueplane/commit-reflect-shared
+└── shared/                        # commit-reflect-shared utilities
     ├── types/
-    │   ├── reflection.ts          # Core reflection types
-    │   ├── config.ts              # Configuration types
-    │   ├── mcp.ts                 # MCP protocol types
-    │   ├── question.ts            # Question and answer types
-    │   └── storage.ts             # Storage backend interfaces
+    │   ├── __init__.py
+    │   ├── reflection.py          # Core reflection types
+    │   ├── config.py              # Configuration types
+    │   ├── mcp.py                 # MCP protocol types
+    │   ├── question.py            # Question and answer types
+    │   └── storage.py             # Storage backend interfaces
     ├── storage/
-    │   ├── base.ts                # Abstract StorageBackend class
-    │   ├── jsonl.ts               # JSONL storage implementation
-    │   ├── sqlite.ts              # SQLite storage implementation
-    │   ├── git.ts                 # Git commit message storage
-    │   └── index.ts               # Storage backend factory
+    │   ├── __init__.py
+    │   ├── base.py                # Abstract StorageBackend class
+    │   ├── jsonl.py               # JSONL storage implementation
+    │   ├── sqlite.py              # SQLite storage implementation
+    │   ├── git.py                 # Git commit message storage
+    │   └── factory.py             # Storage backend factory
     ├── utils/
-    │   ├── git.ts                 # Git utility functions
-    │   ├── time.ts                # Timestamp utilities
-    │   └── validation.ts          # Shared validation functions
+    │   ├── __init__.py
+    │   ├── git.py                 # Git utility functions
+    │   ├── time.py                # Timestamp utilities
+    │   └── validation.py          # Shared validation functions
     ├── tests/
-    │   ├── storage.test.ts
-    │   └── utils.test.ts
-    ├── package.json
-    ├── tsconfig.json
+    │   ├── test_storage.py
+    │   └── test_utils.py
+    ├── pyproject.toml
+    ├── setup.py
     └── README.md
 ```
 
@@ -104,20 +106,13 @@ Project documentation including architecture decisions.
 
 ```
 docs/
-├── adr/                           # Architecture Decision Records
-│   ├── README.md                  # ADR index and guidelines
-│   ├── 000-template.md            # ADR template
-│   ├── 001-cli-first-architecture.md
-│   ├── 002-mcp-integration.md
-│   ├── 003-multiple-storage-backends.md
-│   └── 004-interactive-question-flow.md
-├── api/                           # API documentation (future)
-│   ├── cli.md
-│   └── mcp.md
-└── guides/                        # User guides (future)
-    ├── getting-started.md
-    ├── configuration.md
-    └── ide-setup.md
+└── adr/                           # Architecture Decision Records
+    ├── README.md                  # ADR index and guidelines
+    ├── 000-template.md            # ADR template
+    ├── 001-cli-first-architecture.md
+    ├── 002-mcp-integration.md
+    ├── 003-multiple-storage-backends.md
+    └── 004-interactive-question-flow.md
 ```
 
 ### `/examples` - Example Configurations
@@ -151,16 +146,16 @@ tests/
 │   ├── configs/
 │   └── reflections/
 ├── helpers/                       # Test helper functions
-│   ├── git.ts                     # Git test utilities
-│   ├── cli.ts                     # CLI test runners
-│   └── mcp.ts                     # MCP test client
+│   ├── git.py                     # Git test utilities
+│   ├── cli.py                     # CLI test runners
+│   └── mcp.py                     # MCP test client
 ├── integration/                   # Cross-package integration tests
-│   ├── cli-to-storage.test.ts
-│   └── mcp-to-cli.test.ts
+│   ├── test_cli_to_storage.py
+│   └── test_mcp_to_cli.py
 ├── e2e/                          # End-to-end workflow tests
-│   ├── claude-code-workflow.test.ts
-│   └── cli-workflow.test.ts
-└── setup.ts                       # Global test setup
+│   ├── test_claude_code_workflow.py
+│   └── test_cli_workflow.py
+└── conftest.py                    # Pytest configuration
 ```
 
 ### `/.config` - Configuration Templates
@@ -178,17 +173,16 @@ Default configuration files and schemas.
 
 ```
 ai-commit-reflect/
-├── package.json                   # Monorepo root package.json
-├── tsconfig.json                  # Root TypeScript configuration
-├── tsconfig.build.json            # Build-specific TS config
-├── .eslintrc.json                 # ESLint configuration
-├── .prettierrc                    # Prettier configuration
-├── vitest.config.ts               # Vitest test configuration
+├── pyproject.toml                 # Python project configuration
+├── setup.py                       # Package setup script
+├── requirements.txt               # Production dependencies
+├── requirements-dev.txt           # Development dependencies
+├── pytest.ini                     # Pytest configuration
+├── .flake8                        # Flake8 linting configuration
+├── .mypy.ini                      # MyPy type checking configuration
 ├── .gitignore                     # Git ignore rules
-├── .npmignore                     # npm publish ignore rules
 ├── LICENSE                        # License file
 ├── README.md                      # Main project README
-├── CONTRIBUTING.md                # Contribution guidelines
 ├── DIRECTORY_STRUCTURE.md         # This file
 ├── CHANGELOG.md                   # Version history
 └── .github/                       # GitHub-specific files
@@ -216,27 +210,6 @@ graph TD
 2. `cli` depends only on `shared` (standalone functionality)
 3. `mcp-server` depends on `shared` and spawns `cli` processes
 4. `ide-hooks` interact with `mcp-server` via MCP protocol
-
-## Build Outputs
-
-```
-packages/
-├── cli/
-│   └── dist/                      # Compiled JavaScript
-│       ├── index.js
-│       ├── index.d.ts
-│       └── ...
-├── mcp-server/
-│   └── dist/
-│       ├── index.js
-│       ├── index.d.ts
-│       └── ...
-└── shared/
-    └── dist/
-        ├── index.js
-        ├── index.d.ts
-        └── ...
-```
 
 ## Data Storage Locations
 
@@ -268,19 +241,19 @@ packages/
 ```bash
 # Work in packages/cli/src/
 cd packages/cli
-npm run dev -- --project test --commit HEAD
 
-# TypeScript files executed directly via tsx
+# Install in editable mode
+pip install -e .
+
+# Run directly
+python -m commit_reflect --project test --commit HEAD
 ```
 
 ### Production
 
 ```bash
-# Compiled to packages/cli/dist/
-npm run build
-
-# Installed globally
-npm install -g @blueplane/commit-reflect
+# Install from PyPI
+pip install commit-reflect
 
 # Executed from anywhere
 commit-reflect --project my-app --commit HEAD
@@ -288,28 +261,9 @@ commit-reflect --project my-app --commit HEAD
 
 ## Notes
 
-- All TypeScript source in `src/` directories
-- All compiled output in `dist/` directories
-- All tests co-located with source or in `tests/` directories
+- All Python source in `src/` directories with `__init__.py` for package structure
+- All tests co-located with source or in `tests/` directories using pytest
 - All documentation in `/docs` except package-specific READMEs
 - Configuration files in `/.config` for templates, project root for active config
 - Examples provide copy-paste starting points for users
-
-## Future Structure Additions
-
-As the project evolves, these directories may be added:
-
-```
-packages/
-├── analytics/                     # Analytics and reporting tools
-├── web-dashboard/                 # Optional web UI
-└── vscode-extension/              # VS Code extension
-
-docs/
-├── architecture/                  # System architecture diagrams
-└── tutorials/                     # Step-by-step tutorials
-
-scripts/
-├── migrate.ts                     # Data migration scripts
-└── setup-dev.sh                   # Development environment setup
-```
+- SQLite database used for structured storage (included with Python standard library)

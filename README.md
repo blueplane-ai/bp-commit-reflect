@@ -11,7 +11,7 @@ Designed as a modular component within the Blueplane ecosystem, this system prov
 - **Standalone CLI tool** for direct command-line usage
 - **MCP server** for integration with AI agents (Claude Code, Cursor, etc.)
 - **IDE hooks** for seamless in-editor reflection capture
-- **Multiple storage backends** (JSONL, SQLite, git commit messages)
+- **Multiple storage backends** (JSONL, SQLite database, git commit messages)
 - **Rich querying and analytics** capabilities
 
 ## Architecture
@@ -30,7 +30,7 @@ commit-reflect --project <project-name> --branch <branch-name> --commits <hash1,
 **Features:**
 - Interactive one-by-one question prompting
 - Configurable question sets via JSON config
-- Multiple storage backends (JSONL, SQLite, amended commit messages)
+- Multiple storage backends (JSONL, SQLite database, amended commit messages)
 - Progress indicators and helpful context
 
 ### 2. MCP Server: `mcp-commit-reflect`
@@ -56,10 +56,10 @@ Exposes commit reflection capabilities to AI agents through the Model Context Pr
 
 ```bash
 # Install the CLI tool
-npm install -g @blueplane/commit-reflect
+pip install commit-reflect
 
 # Install the MCP server
-npm install -g @blueplane/mcp-commit-reflect
+pip install mcp-commit-reflect
 ```
 
 ### Basic Usage
@@ -76,24 +76,24 @@ commit-reflect config --storage jsonl,database --jsonl-path .reflections.jsonl
 
 #### Claude Code
 
-Add to `.claude/hooks/post-tool-use.js`:
+Add to `.claude/hooks/post-tool-use.py`:
 
-```javascript
-// See packages/ide-hooks/claude-code/post-tool-use.js for full implementation
-export async function onPostToolUse(toolName, toolInput, toolOutput) {
-  // Detects commits and triggers MCP-based reflection
-}
+```python
+# See packages/ide-hooks/claude-code/post_tool_use.py for full implementation
+async def on_post_tool_use(tool_name, tool_input, tool_output):
+    # Detects commits and triggers MCP-based reflection
+    pass
 ```
 
 #### Cursor
 
-Add to `.cursor/hooks/afterShellExecution.ts`:
+Add to `.cursor/hooks/after_shell_execution.py`:
 
-```typescript
-// See packages/ide-hooks/cursor/afterShellExecution.ts for full implementation
-export async function afterShellExecution(command, output, exitCode) {
-  // Monitors git commits and triggers reflection prompts
-}
+```python
+# See packages/ide-hooks/cursor/after_shell_execution.py for full implementation
+async def after_shell_execution(command, output, exit_code):
+    # Monitors git commits and triggers reflection prompts
+    pass
 ```
 
 ## Question Set
@@ -130,7 +130,7 @@ Each reflection is stored as a single-line JSON object:
   "branch": "feature/user-auth",
   "commit_hash": "a1b2c3d4",
   "commit_message": "Add JWT authentication middleware",
-  "files_changed": ["src/auth/middleware.ts", "tests/auth.test.ts"],
+  "files_changed": ["src/auth/middleware.py", "tests/test_auth.py"],
   "reflections": {
     "ai_synergy": 4,
     "confidence": 5,
@@ -148,7 +148,7 @@ Each reflection is stored as a single-line JSON object:
 
 ### SQLite Database
 
-Structured storage enabling rich queries:
+Structured storage using SQLite enabling rich queries:
 
 ```sql
 SELECT AVG(ai_synergy) as avg_synergy,
@@ -187,14 +187,14 @@ Create `.commit-reflect.json` in your project root or `~/.commit-reflect/config.
 ```
 ai-commit-reflect/
 ├── packages/
-│   ├── cli/                    # Standalone CLI tool
+│   ├── cli/                    # Standalone CLI tool (Python)
 │   │   └── src/
-│   ├── mcp-server/             # Model Context Protocol server
+│   ├── mcp-server/             # Model Context Protocol server (Python)
 │   │   └── src/
-│   ├── ide-hooks/              # IDE integration hooks
+│   ├── ide-hooks/              # IDE integration hooks (Python)
 │   │   ├── claude-code/
 │   │   └── cursor/
-│   └── shared/                 # Shared types and utilities
+│   └── shared/                 # Shared types and utilities (Python)
 │       ├── types/
 │       └── storage/
 ├── docs/
@@ -206,9 +206,10 @@ ai-commit-reflect/
 
 ## Implementation Roadmap
 
-### Phase 1: Core CLI Tool ✓
+### Phase 1: Core CLI Tool
 - Standalone CLI with basic prompts
 - JSONL storage
+- SQLite database storage
 - Configuration file support
 - Question templates
 
@@ -224,12 +225,6 @@ ai-commit-reflect/
 - End-to-end workflow testing
 - UX refinement
 
-### Phase 4: Analytics & Enhancements
-- SQLite storage backend
-- Query/analysis tools
-- Visualization dashboard (optional)
-- Team aggregation features (optional)
-
 ## Blueplane Ecosystem Integration
 
 This commit reflection system is designed as a self-contained, modular component within the broader Blueplane ecosystem:
@@ -243,9 +238,9 @@ This commit reflection system is designed as a self-contained, modular component
 
 ### Prerequisites
 
-- Node.js 18+
+- Python 3.9+
 - Git
-- SQLite (for database storage)
+- SQLite (included with Python)
 
 ### Setup
 
@@ -254,14 +249,15 @@ This commit reflection system is designed as a self-contained, modular component
 git clone https://github.com/blueplane-ai/ai-commit-reflect.git
 cd ai-commit-reflect
 
-# Install dependencies
-npm install
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# Build all packages
-npm run build
+# Install dependencies
+pip install -e ".[dev]"
 
 # Run tests
-npm test
+pytest
 ```
 
 ### Running Locally
@@ -269,16 +265,12 @@ npm test
 ```bash
 # Run CLI in development mode
 cd packages/cli
-npm run dev -- --project test --branch main --commit HEAD
+python -m commit_reflect --project test --branch main --commit HEAD
 
 # Start MCP server
 cd packages/mcp-server
-npm run dev
+python -m mcp_commit_reflect
 ```
-
-## Contributing
-
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License
 

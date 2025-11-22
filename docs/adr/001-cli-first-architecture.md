@@ -36,7 +36,7 @@ The CLI will:
 ### Positive
 
 - **Testability**: CLI can be tested in isolation without complex IDE or MCP setup
-- **Portability**: Works in any environment with Node.js/shell access
+- **Portability**: Works in any environment with Python/shell access
 - **Git hook integration**: Can be called directly from git hooks (post-commit, pre-push, etc.)
 - **Debugging**: Easy to debug and troubleshoot without IDE dependencies
 - **Standalone value**: Provides immediate value to developers who prefer terminal workflows
@@ -96,7 +96,7 @@ Build a centralized HTTP service that all clients (CLI, IDE, MCP) connect to.
 
 ### Library-Only Approach
 
-Create a shared npm package with reflection logic, imported by each integration point.
+Create a shared Python package with reflection logic, imported by each integration point.
 
 **Pros:**
 - Code reuse through imports
@@ -105,9 +105,9 @@ Create a shared npm package with reflection logic, imported by each integration 
 
 **Cons:**
 - No standalone CLI usage
-- Requires Node.js runtime in every integration
+- Requires Python runtime in every integration
 - Can't be used from git hooks without wrapper script
-- Less flexible for non-JavaScript integrations
+- Less flexible for non-Python integrations
 
 ## References
 

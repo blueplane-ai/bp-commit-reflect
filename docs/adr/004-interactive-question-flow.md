@@ -83,80 +83,88 @@ Question 5 of 5 (optional)
 ### State Management
 
 **CLI Implementation:**
-```typescript
-class ReflectionSession {
-  private sessionId: string;
-  private commit: CommitInfo;
-  private questions: Question[];
-  private answers: Map<string, any>;
-  private currentQuestionIndex: number;
+```python
+class ReflectionSession:
+    def __init__(self):
+        self.session_id: str = ""
+        self.commit: CommitInfo = None
+        self.questions: List[Question] = []
+        self.answers: Dict[str, Any] = {}
+        self.current_question_index: int = 0
 
-  // All state held in memory
-  async start(): Promise<QuestionResponse> {
-    this.currentQuestionIndex = 0;
-    return this.getCurrentQuestion();
-  }
+    # All state held in memory
+    async def start(self) -> QuestionResponse:
+        self.current_question_index = 0
+        return self.get_current_question()
 
-  async submitAnswer(answer: string, skip: boolean = false): Promise<QuestionResponse> {
-    // Validate answer
-    // Store in memory
-    this.answers.set(this.questions[this.currentQuestionIndex].id, answer);
-    this.currentQuestionIndex++;
+    async def submit_answer(self, answer: str, skip: bool = False) -> QuestionResponse:
+        # Validate answer
+        # Store in memory
+        question_id = self.questions[self.current_question_index].id
+        self.answers[question_id] = answer
+        self.current_question_index += 1
 
-    if (this.currentQuestionIndex >= this.questions.length) {
-      return { allQuestionsAnswered: true, readyToComplete: true };
-    }
+        if self.current_question_index >= len(self.questions):
+            return {
+                "all_questions_answered": True,
+                "ready_to_complete": True
+            }
 
-    return this.getCurrentQuestion();
-  }
+        return self.get_current_question()
 
-  async complete(): Promise<void> {
-    // ONLY NOW write to storage
-    await this.storageBackend.write({
-      commit: this.commit,
-      reflections: Object.fromEntries(this.answers)
-    });
-  }
-}
+    async def complete(self) -> None:
+        # ONLY NOW write to storage
+        await self.storage_backend.write({
+            "commit": self.commit,
+            "reflections": self.answers
+        })
 ```
 
 **MCP Server Coordination:**
-```typescript
-class MCPServer {
-  private sessions: Map<string, ChildProcess>;
+```python
+import subprocess
+import json
 
-  async start_commit_reflection(commitInfo): Promise<Response> {
-    // Spawn CLI process with commit context
-    const sessionId = generateId();
-    const cliProcess = spawn('commit-reflect', [
-      '--project', commitInfo.project,
-      '--commit', commitInfo.commit_hash,
-      '--mode', 'mcp-session',
-      '--session-id', sessionId
-    ]);
+class MCPServer:
+    def __init__(self):
+        self.sessions: Dict[str, subprocess.Popen] = {}
 
-    this.sessions.set(sessionId, cliProcess);
+    async def start_commit_reflection(self, commit_info: dict) -> dict:
+        # Spawn CLI process with commit context
+        session_id = generate_id()
+        cli_process = subprocess.Popen(
+            [
+                'commit-reflect',
+                '--project', commit_info['project'],
+                '--commit', commit_info['commit_hash'],
+                '--mode', 'mcp-session',
+                '--session-id', session_id
+            ],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
 
-    // CLI returns first question
-    return await this.readFromCLI(cliProcess);
-  }
+        self.sessions[session_id] = cli_process
 
-  async answer_reflection_question(sessionId, answer): Promise<Response> {
-    const cliProcess = this.sessions.get(sessionId);
-    // Send answer to CLI stdin
-    cliProcess.stdin.write(JSON.stringify({ answer }) + '\n');
-    // CLI validates, stores in memory, returns next question
-    return await this.readFromCLI(cliProcess);
-  }
+        # CLI returns first question
+        return await self.read_from_cli(cli_process)
 
-  async complete_reflection(sessionId): Promise<Response> {
-    const cliProcess = this.sessions.get(sessionId);
-    // Send completion signal
-    cliProcess.stdin.write(JSON.stringify({ complete: true }) + '\n');
-    // CLI writes to storage and exits
-    return await this.readFromCLI(cliProcess);
-  }
-}
+    async def answer_reflection_question(self, session_id: str, answer: str) -> dict:
+        cli_process = self.sessions.get(session_id)
+        # Send answer to CLI stdin
+        cli_process.stdin.write(json.dumps({"answer": answer}).encode() + b'\n')
+        cli_process.stdin.flush()
+        # CLI validates, stores in memory, returns next question
+        return await self.read_from_cli(cli_process)
+
+    async def complete_reflection(self, session_id: str) -> dict:
+        cli_process = self.sessions.get(session_id)
+        # Send completion signal
+        cli_process.stdin.write(json.dumps({"complete": True}).encode() + b'\n')
+        cli_process.stdin.flush()
+        # CLI writes to storage and exits
+        return await self.read_from_cli(cli_process)
 ```
 
 ## Consequences
@@ -321,16 +329,17 @@ Build a GUI application with multi-page wizard flow.
 
 Sessions automatically timeout after **30 minutes** of inactivity:
 
-```typescript
-class ReflectionSession {
-  private lastActivity: Date;
+```python
+from datetime import datetime, timedelta
 
-  isTimedOut(): boolean {
-    const now = new Date();
-    const elapsed = now.getTime() - this.lastActivity.getTime();
-    return elapsed > 30 * 60 * 1000; // 30 minutes
-  }
-}
+class ReflectionSession:
+    def __init__(self):
+        self.last_activity: datetime = datetime.now()
+
+    def is_timed_out(self) -> bool:
+        now = datetime.now()
+        elapsed = now - self.last_activity
+        return elapsed > timedelta(minutes=30)
 ```
 
 ### Validation
@@ -365,24 +374,22 @@ All treated as skipped, stored as `null` in data.
 
 If validation fails, user re-enters answer without losing previous progress:
 
-```typescript
-async submitAnswer(answer: string): Promise<QuestionResponse> {
-  const question = this.questions[this.currentQuestionIndex];
+```python
+async def submit_answer(self, answer: str) -> dict:
+    question = self.questions[self.current_question_index]
 
-  try {
-    const validated = this.validate(answer, question);
-    this.answers.set(question.id, validated);
-    this.currentQuestionIndex++;
-    return this.getCurrentQuestion();
-  } catch (validationError) {
-    // Don't advance, return same question with error
-    return {
-      sessionId: this.sessionId,
-      error: validationError.message,
-      question: this.getCurrentQuestion()
-    };
-  }
-}
+    try:
+        validated = self.validate(answer, question)
+        self.answers[question.id] = validated
+        self.current_question_index += 1
+        return self.get_current_question()
+    except ValidationError as e:
+        # Don't advance, return same question with error
+        return {
+            "session_id": self.session_id,
+            "error": str(e),
+            "question": self.get_current_question()
+        }
 ```
 
 ## References
