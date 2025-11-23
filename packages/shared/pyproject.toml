@@ -47,7 +47,11 @@ Repository = "https://github.com/yourusername/commit-reflect"
 Issues = "https://github.com/yourusername/commit-reflect/issues"
 
 [tool.setuptools]
-packages = ["types", "storage", "utils", "tests"]
+# Auto-discover packages in current directory, excluding tests
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["types*", "storage*", "utils*"]
+exclude = ["tests*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -58,6 +62,16 @@ addopts = [
     "--verbose",
     "--strict-markers",
     "--strict-config",
+]
+markers = [
+    "unit: Unit tests for individual components",
+    "integration: Integration tests for component interactions",
+    "slow: Tests that take significant time to run",
+    "storage: Tests for storage backend implementations",
+    "types: Tests for type definitions and validation",
+    "utils: Tests for utility functions",
+    "mcp: Tests for MCP server functionality",
+    "cli: Tests for CLI interface",
 ]
 
 [tool.coverage.run]

@@ -170,7 +170,7 @@ class TestSessionLifecycle:
 class TestSessionErrorRecovery:
     """Tests for session error recovery and resilience."""
 
-    def test_recover_from_invalid_answer(self, minimal_config):
+    def test_recover_from_invalid_answer(self, full_config):
         """Test recovery from invalid answer input."""
         session = {
             "current_question_index": 0,
@@ -178,12 +178,12 @@ class TestSessionErrorRecovery:
             "errors": [],
         }
 
-        question = minimal_config["questions"][0]
+        question = full_config["questions"][0]
 
         # Attempt invalid answer (empty string for required field)
         invalid_answer = ""
 
-        if question["required"] and not invalid_answer:
+        if question.get("required", False) and not invalid_answer:
             session["errors"].append(
                 {
                     "question_id": question["id"],
