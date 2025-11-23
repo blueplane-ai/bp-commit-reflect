@@ -7,8 +7,8 @@ writes across multiple backends.
 """
 
 from typing import Dict, List, Optional, Type
-from types.storage import StorageBackend, StorageError
-from types.config import StorageConfig, StorageBackendConfig
+from shared.types.storage import StorageBackend, StorageError
+from shared.types.config import StorageConfig, StorageBackendConfig
 
 
 class StorageFactory:

@@ -5,7 +5,7 @@ Tests configuration loading, validation, and defaults.
 """
 
 import pytest
-from types.config import (
+from shared.types.config import (
     Config,
     StorageConfig,
     StorageBackendConfig,

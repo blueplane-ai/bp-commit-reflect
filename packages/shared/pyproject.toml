@@ -47,11 +47,9 @@ Repository = "https://github.com/yourusername/commit-reflect"
 Issues = "https://github.com/yourusername/commit-reflect/issues"
 
 [tool.setuptools]
-# Auto-discover packages in current directory, excluding tests
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["types*", "storage*", "utils*"]
-exclude = ["tests*"]
+# Map current directory to 'shared' package with submodules
+packages = ["shared", "shared.types", "shared.storage", "shared.utils"]
+package-dir = {"shared" = "."}
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

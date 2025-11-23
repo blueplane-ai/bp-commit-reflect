@@ -8,7 +8,7 @@ multiple storage backends.
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Set
-from types.storage import StorageBackend
+from shared.types.storage import StorageBackend
 
 
 @dataclass

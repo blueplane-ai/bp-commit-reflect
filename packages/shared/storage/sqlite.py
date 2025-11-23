@@ -13,7 +13,7 @@ from typing import List, Optional, Dict, Any
 from uuid import UUID
 from contextlib import contextmanager
 
-from ..types.storage import (
+from shared.types.storage import (
     StorageBackend,
     StorageResult,
     StorageError,
@@ -23,7 +23,7 @@ from ..types.storage import (
     QueryOptions,
     SortOrder,
 )
-from ..types.reflection import Reflection
+from shared.types.reflection import Reflection
 
 
 # Database schema version for migrations

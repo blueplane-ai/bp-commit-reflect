@@ -10,7 +10,7 @@ import pytest
 from datetime import datetime, timezone
 from pathlib import Path
 
-from storage.jsonl import JSONLStorage
+from shared.storage.jsonl import JSONLStorage
 
 
 @pytest.mark.storage

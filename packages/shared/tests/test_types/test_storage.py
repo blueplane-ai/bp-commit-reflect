@@ -6,7 +6,7 @@ Tests the storage backend interface and contracts.
 
 import pytest
 from abc import ABC
-from types.storage import StorageBackend, StorageError
+from shared.types.storage import StorageBackend, StorageError
 
 
 class TestStorageBackendInterface:

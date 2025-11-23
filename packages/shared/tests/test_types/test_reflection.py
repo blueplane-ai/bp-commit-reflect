@@ -9,7 +9,7 @@ Tests the core Reflection data model including:
 
 import pytest
 from datetime import datetime, timezone
-from types.reflection import Reflection, CommitMetadata, ReflectionValidationError
+from shared.types.reflection import Reflection, CommitMetadata, ReflectionValidationError
 
 
 class TestCommitMetadata:

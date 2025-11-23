@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Dict, List, Optional
-from types.storage import StorageBackend, StorageError
+from shared.types.storage import StorageBackend, StorageError
 
 
 class HealthStatus(Enum):

@@ -10,14 +10,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
-from storage.sqlite import SQLiteStorage
-from types.reflection import (
+from shared.storage.sqlite import SQLiteStorage
+from shared.types.reflection import (
     Reflection,
     ReflectionAnswer,
     CommitContext,
     SessionMetadata,
 )
-from types.storage import StorageResult, QueryOptions, SortOrder
+from shared.types.storage import StorageResult, QueryOptions, SortOrder
 
 
 @pytest.mark.storage

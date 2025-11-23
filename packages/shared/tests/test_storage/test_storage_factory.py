@@ -8,11 +8,11 @@ writes across multiple backends.
 import pytest
 from unittest.mock import Mock, MagicMock
 
-from storage.factory import StorageFactory, MultiBackendCoordinator
-from storage.jsonl import JSONLStorage
-from storage.sqlite import SQLiteStorage
-from types.storage import StorageError, StorageBackend
-from types.config import StorageConfig, StorageBackendConfig
+from shared.storage.factory import StorageFactory, MultiBackendCoordinator
+from shared.storage.jsonl import JSONLStorage
+from shared.storage.sqlite import SQLiteStorage
+from shared.types.storage import StorageError, StorageBackend
+from shared.types.config import StorageConfig, StorageBackendConfig
 
 
 @pytest.mark.storage
