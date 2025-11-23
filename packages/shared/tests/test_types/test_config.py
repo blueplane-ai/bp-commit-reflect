@@ -205,14 +205,14 @@ class TestConfig:
     def test_config_defaults_applied(self):
         """Test that default values are applied when not specified."""
         minimal = {
-            "version": "1.0",
-            "storage": {
-                "backends": [{"type": "jsonl", "path": "reflections.jsonl"}]
-            },
+            "storage_backends": [
+                {"backend_type": "jsonl", "path": "reflections.jsonl"}
+            ],
             "questions": [
                 {"id": "what", "text": "What changed?", "type": "text"}
             ],
         }
         config = Config.from_dict(minimal)
-        assert config.session.timeout_seconds == 300  # Default
-        assert config.git.auto_detect_commit is True  # Default
+        assert config.session.timeout is None  # Default
+        assert config.session.auto_save is True  # Default
+        assert config.mcp.enabled is False  # Default

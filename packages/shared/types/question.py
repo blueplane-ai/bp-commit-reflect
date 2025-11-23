@@ -24,6 +24,15 @@ class QuestionType(str, Enum):
     BOOLEAN = "boolean"        # Yes/No question
     SCALE = "scale"            # Scaled response (e.g., 1-10)
 
+    def __str__(self) -> str:
+        """Return the string value of the enum."""
+        return self.value
+
+    @classmethod
+    def from_string(cls, value: str) -> "QuestionType":
+        """Create QuestionType from string value."""
+        return cls(value)
+
 
 @dataclass
 class Question:
@@ -63,6 +72,12 @@ class Question:
 
     def __post_init__(self):
         """Validate question configuration."""
+        # Validate required fields
+        if not self.id or not self.id.strip():
+            raise ValueError("Question ID cannot be empty")
+        if not self.text or not self.text.strip():
+            raise ValueError("Question text cannot be empty")
+
         if isinstance(self.question_type, str):
             self.question_type = QuestionType(self.question_type)
 
@@ -82,7 +97,7 @@ class Question:
         result = {
             "id": self.id,
             "text": self.text,
-            "question_type": self.question_type.value,
+            "type": self.question_type.value,  # Use 'type' for external API
             "required": self.required,
             "order": self.order,
         }
@@ -114,10 +129,13 @@ class Question:
         data = data.copy()
         data.pop("conditional", None)
 
+        # Support both 'type' and 'question_type' for backward compatibility
+        question_type_value = data.get("type") or data.get("question_type", "text")
+
         return cls(
             id=data["id"],
             text=data["text"],
-            question_type=QuestionType(data.get("question_type", "text")),
+            question_type=QuestionType(question_type_value),
             required=data.get("required", True),
             help_text=data.get("help_text"),
             placeholder=data.get("placeholder"),
@@ -228,8 +246,20 @@ class QuestionConfig:
         return result
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "QuestionConfig":
-        """Create config from dictionary representation."""
+    def from_dict(cls, data) -> "QuestionConfig":
+        """Create config from dictionary representation.
+
+        Supports both dict format and list format (legacy):
+        - Dict: {"custom_questions": [...], "skip_questions": [...]}
+        - List: [{"id": "q1", "text": "Q1", "type": "text"}]
+        """
+        # Handle legacy format where questions is just a list
+        if isinstance(data, list):
+            return cls(
+                custom_questions=[Question.from_dict(q) for q in data] or None,
+            )
+
+        # Handle full dict format
         return cls(
             custom_questions=[Question.from_dict(q) for q in data.get("custom_questions", [])] or None,
             skip_questions=data.get("skip_questions"),

@@ -30,26 +30,37 @@ class TestStorageBackendInterface:
 
     def test_storage_backend_complete_implementation(self):
         """Test that complete implementation can be instantiated."""
+        from shared.types.storage import StorageResult, QueryOptions
+        from uuid import UUID
 
         class CompleteBackend(StorageBackend):
             """Complete backend with all required methods."""
 
-            def write(self, reflection):
-                return True
-
-            def read(self, limit=None):
-                return []
-
-            def read_recent(self, count=10):
-                return []
-
-            def health_check(self):
-                return True
+            def initialize(self):
+                return StorageResult.success_result()
 
             def close(self):
-                pass
+                return StorageResult.success_result()
 
-        backend = CompleteBackend()
+            def save_reflection(self, reflection):
+                return StorageResult.success_result()
+
+            def get_reflection(self, reflection_id):
+                return None
+
+            def query_reflections(self, options):
+                return []
+
+            def delete_reflection(self, reflection_id):
+                return StorageResult.success_result()
+
+            def count_reflections(self, filter_by=None):
+                return 0
+
+            def health_check(self):
+                return StorageResult.success_result()
+
+        backend = CompleteBackend({})
         assert backend is not None
 
 
@@ -64,11 +75,14 @@ class TestStorageError:
     def test_storage_error_with_cause(self):
         """Test storage error with underlying cause."""
         try:
-            raise IOError("Disk full")
-        except IOError as e:
-            error = StorageError("Failed to write", cause=e)
+            try:
+                raise IOError("Disk full")
+            except IOError as e:
+                raise StorageError("Failed to write") from e
+        except StorageError as error:
             assert "Failed to write" in str(error)
-            assert error.__cause__ == e
+            assert error.__cause__ is not None
+            assert isinstance(error.__cause__, IOError)
 
 
 class TestMockStorageBackend:

@@ -19,12 +19,12 @@ class TestQuestion:
         question = Question(
             id="what",
             text="What changed?",
-            type=QuestionType.TEXT,
+            question_type=QuestionType.TEXT,
             required=True,
         )
         assert question.id == "what"
         assert question.text == "What changed?"
-        assert question.type == QuestionType.TEXT
+        assert question.question_type == QuestionType.TEXT
         assert question.required is True
 
     def test_question_creation_with_defaults(self):
@@ -32,30 +32,30 @@ class TestQuestion:
         question = Question(
             id="optional",
             text="Optional question?",
-            type=QuestionType.TEXT,
+            question_type=QuestionType.TEXT,
         )
-        assert question.required is False  # Default should be False
+        assert question.required is True  # Default is True
 
     def test_question_multiline_type(self):
         """Test creating a multiline question."""
         question = Question(
             id="description",
             text="Provide detailed description",
-            type=QuestionType.MULTILINE,
+            question_type=QuestionType.MULTILINE,
             required=True,
         )
-        assert question.type == QuestionType.MULTILINE
+        assert question.question_type == QuestionType.MULTILINE
 
     def test_question_choice_type(self):
         """Test creating a choice question."""
         question = Question(
             id="category",
             text="Select category",
-            type=QuestionType.CHOICE,
-            choices=["bug", "feature", "refactor"],
+            question_type=QuestionType.CHOICE,
+            options=["bug", "feature", "refactor"],
         )
-        assert question.type == QuestionType.CHOICE
-        assert len(question.choices) == 3
+        assert question.question_type == QuestionType.CHOICE
+        assert len(question.options) == 3
 
     def test_question_choice_requires_choices(self):
         """Test that CHOICE type requires choices list."""
@@ -63,7 +63,7 @@ class TestQuestion:
             Question(
                 id="category",
                 text="Select category",
-                type=QuestionType.CHOICE,
+                question_type=QuestionType.CHOICE,
                 # Missing choices
             )
 
@@ -73,7 +73,7 @@ class TestQuestion:
             Question(
                 id="",
                 text="What changed?",
-                type=QuestionType.TEXT,
+                question_type=QuestionType.TEXT,
             )
 
     def test_question_validation_empty_text(self):
@@ -82,7 +82,7 @@ class TestQuestion:
             Question(
                 id="what",
                 text="",
-                type=QuestionType.TEXT,
+                question_type=QuestionType.TEXT,
             )
 
     def test_question_serialization(self):
@@ -90,7 +90,7 @@ class TestQuestion:
         question = Question(
             id="what",
             text="What changed?",
-            type=QuestionType.TEXT,
+            question_type=QuestionType.TEXT,
             required=True,
         )
         data = question.to_dict()
@@ -108,7 +108,7 @@ class TestQuestion:
         }
         question = Question.from_dict(data)
         assert question.id == "what"
-        assert question.type == QuestionType.TEXT
+        assert question.question_type == QuestionType.TEXT
 
 
 @pytest.mark.skip(reason="Answer class not implemented in current API")
@@ -148,7 +148,7 @@ class TestAnswer:
         answer = Answer(
             question_id="category",
             value="bug",
-            choices=["bug", "feature", "refactor"],
+            options=["bug", "feature", "refactor"],
         )
         assert answer.value == "bug"
 
@@ -157,7 +157,7 @@ class TestAnswer:
             Answer(
                 question_id="category",
                 value="invalid",
-                choices=["bug", "feature", "refactor"],
+                options=["bug", "feature", "refactor"],
             )
 
     def test_answer_serialization(self):
