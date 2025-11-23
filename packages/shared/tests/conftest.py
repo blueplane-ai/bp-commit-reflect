@@ -327,3 +327,63 @@ def generate_commit_metadata():
         return commits
 
     return _generate
+
+
+@pytest.fixture
+def sample_reflection_object():
+    """
+    Sample Reflection object for testing.
+
+    Returns a complete Reflection object with all required fields.
+    """
+    from uuid import uuid4
+    from ..types.reflection import (
+        Reflection,
+        ReflectionAnswer,
+        CommitContext,
+        SessionMetadata,
+    )
+
+    return Reflection(
+        id=uuid4(),
+        answers=[
+            ReflectionAnswer(
+                question_id="ai_synergy",
+                question_text="How well did you and AI work together?",
+                answer="4",
+                answered_at=datetime.now(timezone.utc),
+            ),
+            ReflectionAnswer(
+                question_id="confidence",
+                question_text="How confident are you in these changes?",
+                answer="5",
+                answered_at=datetime.now(timezone.utc),
+            ),
+            ReflectionAnswer(
+                question_id="experience",
+                question_text="How did this work feel?",
+                answer="Smooth and efficient",
+                answered_at=datetime.now(timezone.utc),
+            ),
+        ],
+        commit_context=CommitContext(
+            commit_hash="abc123def456",
+            commit_message="feat: add user authentication",
+            branch="feature/auth",
+            author_name="Test Author",
+            author_email="test@example.com",
+            timestamp=datetime.now(timezone.utc),
+            files_changed=3,
+            insertions=150,
+            deletions=20,
+            changed_files=["src/auth.py", "tests/test_auth.py"],
+        ),
+        session_metadata=SessionMetadata(
+            session_id=uuid4(),
+            started_at=datetime.now(timezone.utc),
+            completed_at=datetime.now(timezone.utc),
+            project_name="my-project",
+            tool_version="0.1.0",
+            environment="cli",
+        ),
+    )
