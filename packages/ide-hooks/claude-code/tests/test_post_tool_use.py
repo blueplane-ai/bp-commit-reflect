@@ -3,6 +3,7 @@
 import pytest
 import asyncio
 import json
+import subprocess
 import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch, AsyncMock, MagicMock
@@ -108,19 +109,29 @@ class TestCommitReflectionHook:
     def test_extract_commit_info_fallback_to_dirname(self, mock_subprocess):
         """Test commit info extraction falls back to directory name when no remote."""
         hook = CommitReflectionHook()
-        
-        # Mock git commands - remote fails
-        mock_subprocess.side_effect = [
-            Mock(stdout="abc123\n", returncode=0),  # rev-parse HEAD
-            Mock(stdout="Test\n", returncode=0),  # log
-            Mock(stdout="main\n", returncode=0),  # rev-parse --abbrev-ref
-            Mock(stdout="file1.py | 10 +\n", returncode=0),  # show --stat
-            Mock(returncode=1),  # remote get-url fails
-            Mock(stdout="/path/to/project\n", returncode=0),  # basename pwd
-        ]
-        
+
+        # Mock git commands - remote fails with CalledProcessError
+        def run_side_effect(cmd, **kwargs):
+            if cmd[0] == "git" and "remote" in cmd:
+                raise subprocess.CalledProcessError(1, cmd)
+            elif cmd[0] == "pwd":
+                return Mock(stdout="/path/to/project\n", returncode=0)
+            elif cmd[0] == "basename":
+                return Mock(stdout="project\n", returncode=0)
+            elif cmd[0] == "git" and "rev-parse" in cmd and "HEAD" in cmd:
+                return Mock(stdout="abc123\n", returncode=0)
+            elif cmd[0] == "git" and "log" in cmd:
+                return Mock(stdout="Test\n", returncode=0)
+            elif cmd[0] == "git" and "rev-parse" in cmd and "--abbrev-ref" in cmd:
+                return Mock(stdout="main\n", returncode=0)
+            elif cmd[0] == "git" and "show" in cmd:
+                return Mock(stdout="file1.py | 10 +\n", returncode=0)
+            return Mock(stdout="", returncode=0)
+
+        mock_subprocess.side_effect = run_side_effect
+
         info = asyncio.run(hook._extract_commit_info())
-        
+
         assert info is not None
         assert info["project_name"] == "project"
 
@@ -154,6 +165,7 @@ class TestCommitReflectionHook:
         assert "3" in prompt  # Files changed
         assert "Would you like to start a reflection session?" in prompt
 
+    @pytest.mark.asyncio
     @patch('PostToolUse.CommitReflectionHook._extract_commit_info')
     @patch('PostToolUse.CommitReflectionHook._start_reflection_session')
     async def test_on_tool_use_auto_trigger(self, mock_start, mock_extract):
@@ -187,6 +199,7 @@ class TestCommitReflectionHook:
         mock_start.assert_called_once()
 
     @patch('PostToolUse.CommitReflectionHook._extract_commit_info')
+    @pytest.mark.asyncio
     async def test_on_tool_use_ask_before(self, mock_extract):
         """Test ask-before mode generates prompt."""
         hook = CommitReflectionHook({
@@ -212,6 +225,7 @@ class TestCommitReflectionHook:
         assert "Would you like to start a reflection session?" in result
 
     @patch('PostToolUse.CommitReflectionHook._extract_commit_info')
+    @pytest.mark.asyncio
     async def test_on_tool_use_no_commit_info(self, mock_extract):
         """Test hook handles missing commit info gracefully."""
         hook = CommitReflectionHook()
@@ -238,6 +252,7 @@ class TestReflectionQuestionFlow:
         assert flow.question_index == 0
 
     @patch('PostToolUse.ReflectionQuestionFlow._get_next_question')
+    @pytest.mark.asyncio
     async def test_start_flow(self, mock_get_question):
         """Test starting the question flow."""
         flow = ReflectionQuestionFlow("test-session", "localhost:3000")
@@ -255,6 +270,7 @@ class TestReflectionQuestionFlow:
         assert flow.current_question is not None
 
     @patch('PostToolUse.ReflectionQuestionFlow._get_next_question')
+    @pytest.mark.asyncio
     async def test_start_flow_no_questions(self, mock_get_question):
         """Test flow handles missing questions."""
         flow = ReflectionQuestionFlow("test-session", "localhost:3000")
@@ -264,6 +280,7 @@ class TestReflectionQuestionFlow:
             await flow.start_flow()
 
     @patch('PostToolUse.ReflectionQuestionFlow._send_answer')
+    @pytest.mark.asyncio
     async def test_submit_answer_completes(self, mock_send):
         """Test submitting answer when flow is complete."""
         flow = ReflectionQuestionFlow("test-session", "localhost:3000")
@@ -278,6 +295,7 @@ class TestReflectionQuestionFlow:
 
     @patch('PostToolUse.ReflectionQuestionFlow._send_answer')
     @patch('PostToolUse.ReflectionQuestionFlow._get_next_question')
+    @pytest.mark.asyncio
     async def test_submit_answer_continues(self, mock_get, mock_send):
         """Test submitting answer and getting next question."""
         flow = ReflectionQuestionFlow("test-session", "localhost:3000")
@@ -330,6 +348,7 @@ class TestReflectionQuestionFlow:
         assert "Optional" in formatted
         assert "skip" in formatted.lower()
 
+    @pytest.mark.asyncio
     async def test_cancel_flow(self):
         """Test cancelling the flow."""
         flow = ReflectionQuestionFlow("test-session", "localhost:3000")
