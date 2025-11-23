@@ -1,0 +1,63 @@
+{
+  "version": "1.0",
+  "storage": {
+    "backends": [
+      {
+        "type": "sqlite",
+        "path": "/shared/team/reflections.db"
+      },
+      {
+        "type": "jsonl",
+        "path": "/shared/team/reflections.jsonl"
+      }
+    ],
+    "primary": "sqlite"
+  },
+  "questions": [
+    {
+      "id": "what",
+      "text": "What changed in this commit?",
+      "type": "text",
+      "required": true
+    },
+    {
+      "id": "why",
+      "text": "Why was this change necessary?",
+      "type": "text",
+      "required": true
+    },
+    {
+      "id": "category",
+      "text": "What type of change is this?",
+      "type": "choice",
+      "choices": ["feature", "bugfix", "refactor", "docs", "test"],
+      "required": true
+    },
+    {
+      "id": "how",
+      "text": "How was this implemented?",
+      "type": "multiline",
+      "required": false
+    },
+    {
+      "id": "testing",
+      "text": "How was this tested?",
+      "type": "text",
+      "required": false
+    },
+    {
+      "id": "blockers",
+      "text": "Were there any blockers or challenges?",
+      "type": "text",
+      "required": false
+    }
+  ],
+  "git": {
+    "auto_detect_commit": true,
+    "include_diff": false
+  },
+  "session": {
+    "timeout_seconds": 600,
+    "allow_partial_save": true
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "version": "1.0",
+  "storage": {
+    "backends": [
+      {
+        "type": "jsonl",
+        "path": "~/.commit-reflect/personal-reflections.jsonl"
+      }
+    ]
+  },
+  "questions": [
+    {
+      "id": "summary",
+      "text": "Quick summary of changes:",
+      "type": "text",
+      "required": true
+    },
+    {
+      "id": "learnings",
+      "text": "What did you learn?",
+      "type": "multiline",
+      "required": false
+    }
+  ],
+  "git": {
+    "auto_detect_commit": true,
+    "include_diff": false
+  },
+  "session": {
+    "timeout_seconds": 180,
+    "allow_partial_save": false
+  }
+}
