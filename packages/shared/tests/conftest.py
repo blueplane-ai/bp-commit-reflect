@@ -337,13 +337,14 @@ def sample_reflection_object():
     Returns a complete Reflection object with all required fields.
     """
     from uuid import uuid4
-    from ..types.reflection import (
+    from shared.types.reflection import (
         Reflection,
         ReflectionAnswer,
         CommitContext,
         SessionMetadata,
     )
 
+    now = datetime.now(timezone.utc)
     return Reflection(
         id=uuid4(),
         answers=[
@@ -351,19 +352,19 @@ def sample_reflection_object():
                 question_id="ai_synergy",
                 question_text="How well did you and AI work together?",
                 answer="4",
-                answered_at=datetime.now(timezone.utc),
+                answered_at=now,
             ),
             ReflectionAnswer(
                 question_id="confidence",
                 question_text="How confident are you in these changes?",
                 answer="5",
-                answered_at=datetime.now(timezone.utc),
+                answered_at=now,
             ),
             ReflectionAnswer(
                 question_id="experience",
                 question_text="How did this work feel?",
                 answer="Smooth and efficient",
-                answered_at=datetime.now(timezone.utc),
+                answered_at=now,
             ),
         ],
         commit_context=CommitContext(
@@ -372,7 +373,7 @@ def sample_reflection_object():
             branch="feature/auth",
             author_name="Test Author",
             author_email="test@example.com",
-            timestamp=datetime.now(timezone.utc),
+            timestamp=now,
             files_changed=3,
             insertions=150,
             deletions=20,
@@ -380,10 +381,12 @@ def sample_reflection_object():
         ),
         session_metadata=SessionMetadata(
             session_id=uuid4(),
-            started_at=datetime.now(timezone.utc),
-            completed_at=datetime.now(timezone.utc),
+            started_at=now,
+            completed_at=now,
             project_name="my-project",
             tool_version="0.1.0",
             environment="cli",
         ),
+        created_at=now,
+        updated_at=now,
     )

@@ -134,11 +134,11 @@ class TestJSONLStorage:
         # Write reflections with different timestamps
         storage.write({
             "commit_hash": "old",
-            "timestamp": (base_time.replace(hour=0)).isoformat() + "Z"
+            "timestamp": (base_time.replace(hour=0)).isoformat()
         })
         storage.write({
             "commit_hash": "recent",
-            "timestamp": (base_time.replace(hour=12)).isoformat() + "Z"
+            "timestamp": (base_time.replace(hour=12)).isoformat()
         })
         
         # Filter by since time

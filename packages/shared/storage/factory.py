@@ -7,8 +7,9 @@ writes across multiple backends.
 """
 
 from typing import Dict, List, Optional, Type
-from shared.types.storage import StorageBackend, StorageError
-from shared.types.config import StorageConfig, StorageBackendConfig
+from shared.storage.base import StorageBackend
+from shared.types.storage import StorageError
+from shared.types.config import StorageConfig
 
 
 class StorageFactory:
@@ -48,7 +49,7 @@ class StorageFactory:
 
         self._backends[backend_type] = backend_class
 
-    def create_backend(self, config: StorageBackendConfig) -> StorageBackend:
+    def create_backend(self, config: StorageConfig) -> StorageBackend:
         """
         Create a storage backend instance from configuration.
 
@@ -61,7 +62,7 @@ class StorageFactory:
         Raises:
             StorageError: If backend type not registered or creation fails
         """
-        backend_type = config.type
+        backend_type = config.backend_type.value if hasattr(config.backend_type, 'value') else config.backend_type
 
         if backend_type not in self._backends:
             raise StorageError(
@@ -72,7 +73,17 @@ class StorageFactory:
         backend_class = self._backends[backend_type]
 
         try:
-            backend = backend_class(config)
+            # Try to initialize backend with path first (for simple backends like JSONL)
+            # If that fails, try with full config dict (for complex backends like SQLite)
+            try:
+                backend = backend_class(config.path)
+            except TypeError:
+                # Backend expects a config dict, not just a path
+                config_dict = config.to_dict() if hasattr(config, 'to_dict') else {
+                    'path': config.path,
+                    'backend_type': backend_type
+                }
+                backend = backend_class(config_dict)
             return backend
         except Exception as e:
             raise StorageError(

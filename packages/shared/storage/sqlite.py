@@ -83,8 +83,11 @@ class SQLiteStorage(StorageBackend):
             # Ensure parent directory exists
             self.db_path.parent.mkdir(parents=True, exist_ok=True)
 
-            # Create database and schema
-            with self.get_connection() as conn:
+            # Create database and schema (connect directly without _initialized check)
+            conn = sqlite3.connect(str(self.db_path))
+            conn.row_factory = sqlite3.Row
+            conn.execute("PRAGMA foreign_keys = ON")
+            try:
                 cursor = conn.cursor()
 
                 # Create schema version table
@@ -105,6 +108,8 @@ class SQLiteStorage(StorageBackend):
                     self._apply_migrations(conn, current_version)
 
                 conn.commit()
+            finally:
+                conn.close()
 
             self._initialized = True
             return StorageResult.success_result("SQLite storage initialized")

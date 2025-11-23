@@ -11,8 +11,9 @@ from unittest.mock import Mock, MagicMock
 from shared.storage.factory import StorageFactory, MultiBackendCoordinator
 from shared.storage.jsonl import JSONLStorage
 from shared.storage.sqlite import SQLiteStorage
-from shared.types.storage import StorageError, StorageBackend
-from shared.types.config import StorageConfig, StorageBackendConfig
+from shared.storage.base import StorageBackend
+from shared.types.storage import StorageError
+from shared.types.config import StorageConfig
 
 
 @pytest.mark.storage
@@ -93,8 +94,8 @@ class TestStorageFactory:
         factory = StorageFactory()
         factory.register_backend("jsonl", JSONLStorage)
         
-        config = StorageBackendConfig(
-            type="jsonl",
+        config = StorageConfig(
+            backend_type="jsonl",
             path=str(tmp_path / "test.jsonl")
         )
         
@@ -104,12 +105,13 @@ class TestStorageFactory:
     def test_factory_create_unregistered_backend(self):
         """Test that creating unregistered backend raises error."""
         factory = StorageFactory()
-        
-        config = StorageBackendConfig(
-            type="nonexistent",
-            path="/tmp/test"
+
+        # Use a valid backend type that's just not registered in this factory
+        config = StorageConfig(
+            backend_type="sqlite",  # Valid enum value, but not registered
+            path="/tmp/test.db"
         )
-        
+
         with pytest.raises(StorageError):
             factory.create_backend(config)
 
@@ -118,20 +120,18 @@ class TestStorageFactory:
         factory = StorageFactory()
         factory.register_backend("jsonl", JSONLStorage)
         
-        storage_config = StorageConfig(
-            backends=[
-                StorageBackendConfig(
-                    type="jsonl",
-                    path=str(tmp_path / "test1.jsonl")
-                ),
-                StorageBackendConfig(
-                    type="jsonl",
-                    path=str(tmp_path / "test2.jsonl")
-                ),
-            ]
-        )
+        configs = [
+            StorageConfig(
+                backend_type="jsonl",
+                path=str(tmp_path / "test1.jsonl")
+            ),
+            StorageConfig(
+                backend_type="jsonl",
+                path=str(tmp_path / "test2.jsonl")
+            ),
+        ]
         
-        backends = factory.create_backends(storage_config)
+        backends = [factory.create_backend(cfg) for cfg in configs]
         assert len(backends) == 2
         assert all(isinstance(b, JSONLStorage) for b in backends)
 

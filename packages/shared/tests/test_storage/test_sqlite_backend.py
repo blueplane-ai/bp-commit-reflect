@@ -134,6 +134,8 @@ class TestSQLiteStorage:
                     started_at=datetime.now(timezone.utc),
                     project_name=f"project{i % 2}",  # Alternating projects
                 ),
+                created_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(timezone.utc),
             )
             storage.save_reflection(reflection)
         
@@ -172,6 +174,8 @@ class TestSQLiteStorage:
                     started_at=datetime.now(timezone.utc),
                     project_name=project,
                 ),
+                created_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(timezone.utc),
             )
             storage.save_reflection(reflection)
         
@@ -210,6 +214,8 @@ class TestSQLiteStorage:
                     session_id=uuid4(),
                     started_at=datetime.now(timezone.utc),
                 ),
+                created_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(timezone.utc),
             )
             storage.save_reflection(reflection)
         
@@ -247,6 +253,8 @@ class TestSQLiteStorage:
                     session_id=uuid4(),
                     started_at=datetime.now(timezone.utc),
                 ),
+                created_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(timezone.utc),
             )
             storage.save_reflection(reflection)
         
@@ -312,8 +320,10 @@ class TestSQLiteStorage:
                 session_id=uuid4(),
                 started_at=datetime.now(timezone.utc),
             ),
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
         )
-        
+
         result = storage.save_reflection(invalid_reflection)
         assert result.success is False
         assert "Invalid reflection" in result.message
