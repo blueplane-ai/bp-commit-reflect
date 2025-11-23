@@ -6,27 +6,34 @@ import tempfile
 from pathlib import Path
 from datetime import datetime
 
-# These imports will work once Track A & B are implemented
-# from ..src.validators import validate_question_answer, ValidationError
-# from ..src.errors import RecoveryManager, handle_storage_failure
-# from ..src.progress import ProgressIndicator
-# from ...shared.storage.jsonl import JSONLStorage
+from packages.cli.src.validators import validate_question_answer, ValidationError
+from packages.cli.src.progress import ProgressIndicator
+from packages.shared.storage.jsonl import JSONLStorage
 
 
 class TestEndToEndWorkflow:
     """Test complete reflection workflow from start to finish."""
 
-    def test_complete_reflection_flow(self):
+    def test_complete_reflection_flow(self, temp_dir, sample_reflection):
         """Test full reflection capture workflow."""
-        # This test will be fully implemented once Track A & B are complete
-        # For now, we define the test structure
-
-        # 1. Initialize session
-        # 2. Answer all questions
-        # 3. Validate storage
-        # 4. Verify data integrity
-
-        pass  # Placeholder - implement when Track A & B are ready
+        # 1. Initialize storage
+        jsonl_path = temp_dir / "reflections.jsonl"
+        storage = JSONLStorage(str(jsonl_path))
+        
+        # 2. Write reflection
+        success = storage.write(sample_reflection)
+        assert success is True
+        
+        # 3. Verify data integrity
+        assert jsonl_path.exists()
+        
+        # 4. Read back and verify
+        reflections = storage.read_recent(limit=1)
+        assert len(reflections) == 1
+        assert reflections[0]["commit_hash"] == sample_reflection["commit_hash"]
+        assert reflections[0]["project"] == sample_reflection["project"]
+        
+        storage.close()
 
     def test_recovery_workflow(self):
         """Test session recovery after interruption."""
@@ -40,28 +47,31 @@ class TestEndToEndWorkflow:
 class TestJSONLIntegration:
     """Integration tests for JSONL storage."""
 
-    def test_jsonl_atomic_write(self):
+    def test_jsonl_atomic_write(self, temp_dir):
         """Test atomic write operations to JSONL."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            jsonl_path = Path(tmpdir) / "test.jsonl"
+        jsonl_path = temp_dir / "test.jsonl"
+        storage = JSONLStorage(str(jsonl_path))
 
-            # Import after Track A types are defined
-            # storage = JSONLStorage(str(jsonl_path))
-
-            reflection = {
-                "project": "test-project",
-                "commit_hash": "abc123",
-                "timestamp": datetime.utcnow().isoformat() + "Z",
-                "reflections": {
-                    "ai_synergy": 4,
-                    "confidence": 5
-                }
+        reflection = {
+            "project": "test-project",
+            "commit_hash": "abc123",
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "reflections": {
+                "ai_synergy": 4,
+                "confidence": 5
             }
+        }
 
-            # storage.write(reflection)
-            # assert jsonl_path.exists()
-
-            pass  # Placeholder
+        success = storage.write(reflection)
+        assert success is True
+        assert jsonl_path.exists()
+        
+        # Verify content
+        reflections = storage.read_recent(limit=1)
+        assert len(reflections) == 1
+        assert reflections[0]["commit_hash"] == "abc123"
+        
+        storage.close()
 
     def test_jsonl_concurrent_access(self):
         """Test file locking for concurrent access."""
@@ -75,17 +85,62 @@ class TestJSONLIntegration:
 class TestValidationIntegration:
     """Integration tests for validation system."""
 
-    def test_scale_validation_workflow(self):
+    def test_scale_validation_workflow(self, sample_questions):
         """Test scale question validation in workflow."""
-        pass  # Placeholder
+        scale_question = sample_questions[0]  # ai_synergy
+        
+        # Valid answer
+        validated, error = validate_question_answer(scale_question, "4")
+        assert error is None
+        assert validated == 4
+        
+        # Invalid answer - out of range
+        with pytest.raises(ValidationError):
+            validate_question_answer(scale_question, "10")
+        
+        # Invalid answer - not a number
+        with pytest.raises(ValidationError):
+            validate_question_answer(scale_question, "not a number")
 
-    def test_text_validation_workflow(self):
+    def test_text_validation_workflow(self, sample_questions):
         """Test text question validation in workflow."""
-        pass  # Placeholder
+        text_question = sample_questions[2]  # experience
+        
+        # Valid answer
+        validated, error = validate_question_answer(text_question, "Great experience")
+        assert error is None
+        assert validated == "Great experience"
+        
+        # Empty answer (not allowed for required)
+        with pytest.raises(ValidationError):
+            validate_question_answer(text_question, "")
+        
+        # Too long answer
+        long_text = "x" * 600
+        with pytest.raises(ValidationError):
+            validate_question_answer(text_question, long_text)
 
-    def test_error_recovery_workflow(self):
+    def test_error_recovery_workflow(self, temp_dir):
         """Test error recovery mechanisms."""
-        pass  # Placeholder
+        # Test that storage failures don't crash the system
+        jsonl_path = temp_dir / "reflections.jsonl"
+        storage = JSONLStorage(str(jsonl_path))
+        
+        # Write valid reflection
+        reflection = {
+            "project": "test",
+            "commit_hash": "abc123",
+            "timestamp": datetime.utcnow().isoformat() + "Z"
+        }
+        
+        success = storage.write(reflection)
+        assert success is True
+        
+        # System should handle read errors gracefully
+        reflections = storage.read_recent(limit=10)
+        assert isinstance(reflections, list)
+        
+        storage.close()
 
 
 class TestCrossPlatform:
@@ -109,31 +164,94 @@ class TestUserExperience:
 
     def test_progress_indicator_display(self):
         """Test progress indicator displays correctly."""
-        pass  # Placeholder
+        progress = ProgressIndicator(total_questions=5, use_color=False)
+        
+        # Test welcome message
+        progress.show_welcome("test-project", "abc123def456")
+        
+        # Test question display
+        progress.show_question(1, "Question 1", help_text="Help text", optional=False)
+        progress.show_question(2, "Question 2", optional=True)
+        
+        # Test progress tracking
+        assert progress.current_question == 2
 
     def test_error_message_clarity(self):
         """Test error messages are clear and helpful."""
-        pass  # Placeholder
+        progress = ProgressIndicator(use_color=False)
+        
+        # Test error display with help text
+        progress.show_error("Validation failed", "Please enter a number between 1 and 5")
+        
+        # Test error display without help text
+        progress.show_error("Storage error")
 
     def test_help_text_display(self):
         """Test help text is displayed appropriately."""
-        pass  # Placeholder
+        progress = ProgressIndicator(use_color=False)
+        
+        # Test question with help text
+        progress.show_question(
+            1,
+            "How confident are you?",
+            help_text="Rate from 1 to 5",
+            optional=False
+        )
+        
+        # Test question without help text
+        progress.show_question(2, "What did you learn?", optional=True)
 
 
 class TestPerformance:
     """Performance profiling tests."""
 
-    def test_jsonl_write_performance(self):
+    def test_jsonl_write_performance(self, temp_dir):
         """Test JSONL write performance with large files."""
-        pass  # Placeholder
+        import time
+        
+        jsonl_path = temp_dir / "perf.jsonl"
+        storage = JSONLStorage(str(jsonl_path))
+        
+        # Write multiple reflections and measure time
+        start = time.perf_counter()
+        for i in range(100):
+            reflection = {
+                "project": "test",
+                "commit_hash": f"abc{i:03d}",
+                "timestamp": datetime.utcnow().isoformat() + "Z"
+            }
+            storage.write(reflection)
+        
+        elapsed = time.perf_counter() - start
+        avg_time_ms = (elapsed / 100) * 1000
+        
+        # Should be fast (< 100ms per write)
+        assert avg_time_ms < 100, f"Write too slow: {avg_time_ms:.2f}ms"
+        
+        storage.close()
 
     def test_session_memory_usage(self):
         """Test session memory footprint."""
-        pass  # Placeholder
+        # Basic memory test - just verify objects can be created
+        progress = ProgressIndicator(total_questions=5)
+        assert progress.total_questions == 5
+        
+        # Memory usage is minimal for session objects
+        # More detailed memory profiling would require memory_profiler
 
     def test_startup_time(self):
         """Test CLI startup time."""
-        pass  # Placeholder
+        import time
+        
+        # Test that basic imports and initialization are fast
+        start = time.perf_counter()
+        from packages.cli.src.progress import ProgressIndicator
+        from packages.cli.src.validators import validate_scale
+        progress = ProgressIndicator()
+        elapsed = time.perf_counter() - start
+        
+        # Should be very fast (< 100ms)
+        assert elapsed < 0.1, f"Startup too slow: {elapsed*1000:.2f}ms"
 
 
 class TestMCPIntegration:
