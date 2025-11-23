@@ -8,46 +8,45 @@ import pytest
 from shared.types.config import (
     Config,
     StorageConfig,
-    StorageBackendConfig,
+    StorageBackendType,
     SessionConfig,
-    GitConfig,
-    ConfigValidationError,
+    MCPConfig,
 )
 
 
 class TestStorageBackendConfig:
-    """Tests for StorageBackendConfig."""
+    """Tests for StorageConfig (individual backend configuration)."""
 
     def test_jsonl_backend_config(self, tmp_path):
         """Test JSONL backend configuration."""
-        config = StorageBackendConfig(
-            type="jsonl",
+        config = StorageConfig(
+            backend_type="jsonl",
             path=str(tmp_path / "reflections.jsonl"),
         )
-        assert config.type == "jsonl"
+        assert config.backend_type == StorageBackendType.JSONL
         assert config.path is not None
 
     def test_sqlite_backend_config(self, tmp_path):
         """Test SQLite backend configuration."""
-        config = StorageBackendConfig(
-            type="sqlite",
+        config = StorageConfig(
+            backend_type="sqlite",
             path=str(tmp_path / "reflections.db"),
         )
-        assert config.type == "sqlite"
+        assert config.backend_type == StorageBackendType.SQLITE
         assert config.path is not None
 
     def test_backend_config_validation_invalid_type(self):
         """Test that invalid backend type raises error."""
-        with pytest.raises((ValueError, ConfigValidationError)):
-            StorageBackendConfig(
-                type="invalid",
+        with pytest.raises(ValueError):
+            StorageConfig(
+                backend_type="invalid",
                 path="/tmp/test",
             )
 
     def test_backend_config_requires_path(self):
         """Test that backend config requires path."""
-        with pytest.raises((TypeError, ConfigValidationError)):
-            StorageBackendConfig(type="jsonl")
+        with pytest.raises(TypeError):
+            StorageConfig(backend_type="jsonl")
 
 
 class TestStorageConfig:
