@@ -7,6 +7,10 @@ import json
 from pathlib import Path
 import tempfile
 
+# Add project root to path for imports
+project_root = Path(__file__).parent.parent.parent.parent
+sys.path.insert(0, str(project_root))
+
 from packages.shared.storage.jsonl import JSONLStorage
 from packages.cli.src.progress import ProgressIndicator
 from packages.cli.src.validators import validate_scale, validate_text

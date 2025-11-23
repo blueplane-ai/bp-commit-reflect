@@ -2,9 +2,14 @@
 
 import pytest
 import json
+import sys
 import tempfile
 from pathlib import Path
 from datetime import datetime
+
+# Add project root to path for imports
+project_root = Path(__file__).parent.parent.parent.parent
+sys.path.insert(0, str(project_root))
 
 from packages.cli.src.validators import validate_question_answer, ValidationError
 from packages.cli.src.progress import ProgressIndicator
