@@ -32,10 +32,10 @@ Session = sm_module.Session
 
 @pytest.mark.integration
 @pytest.mark.slow
-@pytest.mark.asyncio
 class TestConcurrentSessions:
     """Tests for concurrent session management."""
 
+    @pytest.mark.asyncio
     async def test_multiple_sessions_simultaneously(self):
         """Test managing multiple active sessions at once."""
         manager = SessionManager(max_concurrent_sessions=10)
@@ -60,6 +60,7 @@ class TestConcurrentSessions:
         finally:
             await manager.stop()
 
+    @pytest.mark.asyncio
     async def test_session_isolation(self):
         """Test that sessions don't interfere with each other."""
         manager = SessionManager()
@@ -116,6 +117,7 @@ class TestConcurrentSessions:
 
         assert len(session_ids) == 10
 
+    @pytest.mark.asyncio
     async def test_concurrent_session_creation(self):
         """Test concurrent session creation."""
         manager = SessionManager(max_concurrent_sessions=10)
@@ -138,6 +140,7 @@ class TestConcurrentSessions:
         finally:
             await manager.stop()
 
+    @pytest.mark.asyncio
     async def test_concurrent_session_completion(self):
         """Test completing multiple sessions concurrently."""
         manager = SessionManager(max_concurrent_sessions=10)
@@ -173,7 +176,6 @@ class TestConcurrentSessions:
 
 
 @pytest.mark.integration
-@pytest.mark.asyncio
 class TestProcessCrashRecovery:
     """Tests for process crash recovery."""
 
@@ -207,6 +209,7 @@ class TestProcessCrashRecovery:
         finally:
             await manager.stop()
 
+    @pytest.mark.asyncio
     async def test_detect_orphaned_sessions(self):
         """Test detecting sessions from crashed processes."""
         manager = SessionManager(default_timeout=30)  # 30 seconds for testing
@@ -235,6 +238,7 @@ class TestProcessCrashRecovery:
         finally:
             await manager.stop()
 
+    @pytest.mark.asyncio
     async def test_cleanup_orphaned_sessions(self):
         """Test cleaning up orphaned sessions."""
         manager = SessionManager(default_timeout=30, cleanup_interval=1)

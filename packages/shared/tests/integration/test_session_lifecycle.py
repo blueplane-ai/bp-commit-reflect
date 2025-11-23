@@ -36,10 +36,10 @@ Session = sm_module.Session
 
 
 @pytest.mark.integration
-@pytest.mark.asyncio
 class TestSessionLifecycle:
     """Tests for complete session lifecycle."""
 
+    @pytest.mark.asyncio
     async def test_complete_session_workflow(
         self, minimal_config, mock_commit_metadata
     ):
@@ -73,6 +73,7 @@ class TestSessionLifecycle:
         finally:
             await manager.stop()
 
+    @pytest.mark.asyncio
     async def test_session_initialization(self, mock_commit_metadata):
         """Test session initialization with commit metadata."""
         manager = SessionManager()
@@ -91,6 +92,7 @@ class TestSessionLifecycle:
         finally:
             await manager.stop()
 
+    @pytest.mark.asyncio
     async def test_session_question_progression(self, minimal_config):
         """Test progressing through questions sequentially."""
         manager = SessionManager()
@@ -136,6 +138,7 @@ class TestSessionLifecycle:
         assert partial_data["is_partial"] is True
         assert len(partial_data["answers"]) == 1
 
+    @pytest.mark.asyncio
     async def test_session_completion(self, sample_reflection):
         """Test session completion and reflection save."""
         manager = SessionManager()
@@ -158,6 +161,7 @@ class TestSessionLifecycle:
         finally:
             await manager.stop()
 
+    @pytest.mark.asyncio
     async def test_session_cancellation(self):
         """Test session cancellation without saving."""
         manager = SessionManager()
@@ -179,6 +183,7 @@ class TestSessionLifecycle:
         finally:
             await manager.stop()
 
+    @pytest.mark.asyncio
     async def test_session_timeout_handling(self):
         """Test session timeout detection and handling."""
         manager = SessionManager(default_timeout=5)  # 5 seconds for testing
@@ -207,10 +212,10 @@ class TestSessionLifecycle:
 
 
 @pytest.mark.integration
-@pytest.mark.asyncio
 class TestSessionErrorRecovery:
     """Tests for session error recovery and resilience."""
 
+    @pytest.mark.asyncio
     async def test_recover_from_invalid_answer(self, minimal_config):
         """Test recovery from invalid answer input."""
         manager = SessionManager()
@@ -229,6 +234,7 @@ class TestSessionErrorRecovery:
         finally:
             await manager.stop()
 
+    @pytest.mark.asyncio
     async def test_recover_from_storage_failure(self):
         """Test recovery when storage write fails."""
         manager = SessionManager()
@@ -250,6 +256,7 @@ class TestSessionErrorRecovery:
         finally:
             await manager.stop()
 
+    @pytest.mark.asyncio
     async def test_resume_partial_session(self):
         """Test resuming a partially completed session."""
         manager = SessionManager()

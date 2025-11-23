@@ -83,7 +83,7 @@ class TestMCPCLICommunication:
         
         # Simulate sending a message
         message = json.dumps({"answer": "Test answer"}) + "\n"
-        mock_stdin.write(message.encode())
+        await mock_stdin.write(message.encode())
         await mock_stdin.drain()
         
         # Verify message was written
@@ -186,7 +186,7 @@ class TestMCPCLICommunication:
         answers = ["Answer 1", "Answer 2", "Answer 3"]
         for answer in answers:
             message = json.dumps({"answer": answer}) + "\n"
-            mock_stdin.write(message.encode())
+            await mock_stdin.write(message.encode())
             await mock_stdin.drain()
         
         # Verify all messages were sent
