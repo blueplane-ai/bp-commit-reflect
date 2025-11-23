@@ -1,0 +1,4 @@
+{
+  "storage": ["jsonl"],
+  "jsonl_path": ".commit-reflections.jsonl"
+}
