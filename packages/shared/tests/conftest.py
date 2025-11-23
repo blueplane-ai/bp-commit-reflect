@@ -196,10 +196,9 @@ def minimal_config() -> Dict:
     to run the commit reflection system.
     """
     return {
-        "version": "1.0",
-        "storage": {
-            "backends": [{"type": "jsonl", "path": "reflections.jsonl"}]
-        },
+        "storage_backends": [
+            {"backend_type": "jsonl", "path": "reflections.jsonl"}
+        ],
         "questions": [
             {"id": "what", "text": "What changed?", "type": "text"},
             {"id": "why", "text": "Why did it change?", "type": "text"},
@@ -216,14 +215,11 @@ def full_config(tmp_path: Path) -> Dict:
     and validation.
     """
     return {
-        "version": "1.0",
-        "storage": {
-            "backends": [
-                {"type": "jsonl", "path": str(tmp_path / "reflections.jsonl")},
-                {"type": "sqlite", "path": str(tmp_path / "reflections.db")},
-            ],
-            "primary": "jsonl",
-        },
+        "project_name": "test-project",
+        "storage_backends": [
+            {"backend_type": "jsonl", "path": str(tmp_path / "reflections.jsonl"), "priority": 0},
+            {"backend_type": "sqlite", "path": str(tmp_path / "reflections.db"), "priority": 1},
+        ],
         "questions": [
             {"id": "what", "text": "What changed?", "type": "text", "required": True},
             {"id": "why", "text": "Why did it change?", "type": "text", "required": True},
@@ -246,8 +242,8 @@ def full_config(tmp_path: Path) -> Dict:
                 "required": False,
             },
         ],
-        "git": {"auto_detect_commit": True, "include_diff": False},
-        "session": {"timeout_seconds": 300, "allow_partial_save": True},
+        "session": {"timeout": 300, "auto_save": True},
+        "mcp": {"enabled": False, "host": "localhost", "port": 3000},
     }
 
 
