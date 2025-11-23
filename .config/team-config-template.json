@@ -1,0 +1,75 @@
+{
+  "description": "Team configuration template for commit reflection system",
+  "version": "1.0",
+  "storage": ["jsonl", "database"],
+  "jsonl_path": ".commit-reflections.jsonl",
+  "db_path": "~/.commit-reflect/reflections.db",
+  "questions": [
+    {
+      "id": "ai_synergy",
+      "prompt": "How well did you and AI work together on this commit?",
+      "type": "scale",
+      "range": [1, 5],
+      "optional": false,
+      "help_text": "1 = AI hindered progress, 5 = Perfect collaboration"
+    },
+    {
+      "id": "confidence",
+      "prompt": "How confident are you in these changes?",
+      "type": "scale",
+      "range": [1, 5],
+      "optional": false,
+      "help_text": "1 = Not confident, 5 = Very confident"
+    },
+    {
+      "id": "experience",
+      "prompt": "How did this work feel? What was the experience like?",
+      "type": "text",
+      "max_length": 512,
+      "optional": false,
+      "help_text": "Briefly describe your development experience"
+    },
+    {
+      "id": "blockers",
+      "prompt": "What blockers or friction did you encounter? (optional)",
+      "type": "text",
+      "max_length": 512,
+      "optional": true,
+      "help_text": "Type 'skip' to skip this question"
+    },
+    {
+      "id": "learning",
+      "prompt": "What did you learn from this work? (optional)",
+      "type": "text",
+      "max_length": 512,
+      "optional": true,
+      "help_text": "Type 'skip' to skip this question"
+    }
+  ],
+  "team_settings": {
+    "auto_share": true,
+    "analytics_dashboard_url": null,
+    "notification_channels": [],
+    "required_for_merge": false,
+    "timeout_minutes": 30
+  },
+  "integrations": {
+    "git_hooks": {
+      "post_commit": true,
+      "pre_push": false
+    },
+    "ide_hooks": {
+      "claude_code": true,
+      "cursor": true
+    },
+    "mcp_server": {
+      "enabled": true,
+      "port": null
+    }
+  },
+  "privacy": {
+    "share_reflections": true,
+    "anonymize_data": false,
+    "retention_days": 365
+  }
+}

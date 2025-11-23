@@ -1,0 +1,55 @@
+"""Base storage backend interface."""
+
+from abc import ABC, abstractmethod
+from typing import List, Dict, Any, Optional
+from datetime import datetime
+
+
+class StorageBackend(ABC):
+    """Abstract base class for storage backends."""
+
+    @abstractmethod
+    def write(self, reflection: Dict[str, Any]) -> bool:
+        """
+        Write a reflection to storage.
+
+        Args:
+            reflection: Complete reflection data
+
+        Returns:
+            True if write succeeded, False otherwise
+        """
+        pass
+
+    @abstractmethod
+    def read_recent(
+        self,
+        limit: int = 10,
+        project: Optional[str] = None,
+        since: Optional[datetime] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Read recent reflections from storage.
+
+        Args:
+            limit: Maximum number of reflections to return
+            project: Filter by project name (optional)
+            since: Filter reflections since this timestamp (optional)
+
+        Returns:
+            List of reflection dictionaries
+        """
+        pass
+
+    @abstractmethod
+    def close(self) -> None:
+        """Close the storage backend and clean up resources."""
+        pass
+
+    def __enter__(self):
+        """Context manager entry."""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit."""
+        self.close()
