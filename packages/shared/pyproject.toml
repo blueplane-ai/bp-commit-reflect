@@ -59,6 +59,16 @@ addopts = [
     "--strict-markers",
     "--strict-config",
 ]
+markers = [
+    "unit: Unit tests for individual components",
+    "integration: Integration tests for component interactions",
+    "slow: Tests that take significant time to run",
+    "storage: Tests for storage backend implementations",
+    "types: Tests for type definitions and validation",
+    "utils: Tests for utility functions",
+    "mcp: Tests for MCP server functionality",
+    "cli: Tests for CLI interface",
+]
 
 [tool.coverage.run]
 source = ["types", "storage", "utils"]

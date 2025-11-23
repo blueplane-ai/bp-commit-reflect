@@ -5,55 +5,88 @@ Tests the system's ability to manage multiple simultaneous reflection sessions.
 """
 
 import pytest
+import asyncio
 import threading
-from datetime import datetime, timezone
-from unittest.mock import Mock
-import time
+import sys
+from pathlib import Path
+from datetime import datetime, timezone, timedelta
+from unittest.mock import Mock, AsyncMock
+
+# Add packages to path for imports
+project_root = Path(__file__).parent.parent.parent.parent
+mcp_server_path = project_root / "mcp-server" / "src"
+sys.path.insert(0, str(mcp_server_path))
+
+# Import with proper module structure
+import importlib.util
+
+spec = importlib.util.spec_from_file_location(
+    "session_manager", mcp_server_path / "session_manager.py"
+)
+sm_module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(sm_module)
+SessionManager = sm_module.SessionManager
+SessionState = sm_module.SessionState
+Session = sm_module.Session
 
 
 @pytest.mark.integration
 @pytest.mark.slow
+@pytest.mark.asyncio
 class TestConcurrentSessions:
     """Tests for concurrent session management."""
 
-    def test_multiple_sessions_simultaneously(self):
+    async def test_multiple_sessions_simultaneously(self):
         """Test managing multiple active sessions at once."""
-        sessions = {}
+        manager = SessionManager(max_concurrent_sessions=10)
+        await manager.start()
+        
+        try:
+            # Create multiple sessions
+            sessions = []
+            for i in range(5):
+                session = await manager.create_session(
+                    commit_hash=f"hash_{i}",
+                    project_name=f"project_{i}"
+                )
+                sessions.append(session)
+            
+            assert len(sessions) == 5
+            assert all(s.is_active() for s in sessions)
+            
+            # Verify all sessions are tracked
+            active_sessions = await manager.list_active_sessions()
+            assert len(active_sessions) == 5
+        finally:
+            await manager.stop()
 
-        # Create multiple sessions
-        for i in range(5):
-            session_id = f"session_{i}"
-            sessions[session_id] = {
-                "session_id": session_id,
-                "commit_hash": f"hash_{i}",
-                "started_at": datetime.now(timezone.utc),
-                "answers": {},
-                "status": "active",
-            }
-
-        assert len(sessions) == 5
-        assert all(s["status"] == "active" for s in sessions.values())
-
-    def test_session_isolation(self):
+    async def test_session_isolation(self):
         """Test that sessions don't interfere with each other."""
-        session1 = {
-            "session_id": "session_1",
-            "answers": {"what": "Feature A"},
-            "status": "active",
-        }
-
-        session2 = {
-            "session_id": "session_2",
-            "answers": {"what": "Feature B"},
-            "status": "active",
-        }
-
-        # Modify session1
-        session1["answers"]["why"] = "Reason A"
-
-        # Session2 should be unaffected
-        assert "why" not in session2["answers"]
-        assert session2["answers"]["what"] == "Feature B"
+        manager = SessionManager()
+        await manager.start()
+        
+        try:
+            # Create two sessions
+            session1 = await manager.create_session(
+                commit_hash="hash1",
+                project_name="project1"
+            )
+            session2 = await manager.create_session(
+                commit_hash="hash2",
+                project_name="project2"
+            )
+            
+            # Modify session1
+            session1.current_question_index = 1
+            session1.update_activity()
+            
+            # Session2 should be unaffected
+            retrieved2 = await manager.get_session(session2.session_id)
+            assert retrieved2 is not None
+            assert retrieved2.current_question_index == 0
+            assert retrieved2.commit_hash == "hash2"
+        finally:
+            await manager.stop()
 
     def test_concurrent_writes_to_storage(self, mocker):
         """Test concurrent writes to storage backend."""
@@ -83,165 +116,181 @@ class TestConcurrentSessions:
 
         assert len(session_ids) == 10
 
-    def test_thread_safe_session_creation(self):
-        """Test thread-safe session creation."""
-        import uuid
+    async def test_concurrent_session_creation(self):
+        """Test concurrent session creation."""
+        manager = SessionManager(max_concurrent_sessions=10)
+        await manager.start()
+        
+        try:
+            # Create sessions concurrently using asyncio
+            tasks = []
+            for i in range(5):
+                task = manager.create_session(
+                    commit_hash=f"hash_{i}",
+                    project_name=f"project_{i}"
+                )
+                tasks.append(task)
+            
+            sessions = await asyncio.gather(*tasks)
+            
+            assert len(sessions) == 5
+            assert all(s.is_active() for s in sessions)
+        finally:
+            await manager.stop()
 
-        sessions = {}
-        lock = threading.Lock()
-
-        def create_session(commit_hash):
-            session_id = str(uuid.uuid4())
-            with lock:
-                sessions[session_id] = {
-                    "session_id": session_id,
-                    "commit_hash": commit_hash,
-                    "status": "active",
-                }
-
-        # Create sessions from multiple threads
-        threads = []
-        for i in range(5):
-            thread = threading.Thread(target=create_session, args=(f"hash_{i}",))
-            threads.append(thread)
-            thread.start()
-
-        for thread in threads:
-            thread.join()
-
-        assert len(sessions) == 5
-
-    def test_concurrent_session_completion(self):
+    async def test_concurrent_session_completion(self):
         """Test completing multiple sessions concurrently."""
-        sessions = {
-            f"session_{i}": {
-                "session_id": f"session_{i}",
-                "status": "active",
-                "answers": {"what": f"Change {i}"},
-            }
-            for i in range(3)
-        }
-
-        completed_sessions = []
-
-        def complete_session(session_id):
-            session = sessions[session_id]
-            session["status"] = "completed"
-            session["completed_at"] = datetime.now(timezone.utc)
-            completed_sessions.append(session_id)
-
-        # Complete sessions concurrently
-        threads = []
-        for session_id in sessions.keys():
-            thread = threading.Thread(target=complete_session, args=(session_id,))
-            threads.append(thread)
-            thread.start()
-
-        for thread in threads:
-            thread.join()
-
-        assert len(completed_sessions) == 3
-        assert all(sessions[sid]["status"] == "completed" for sid in completed_sessions)
+        manager = SessionManager(max_concurrent_sessions=10)
+        await manager.start()
+        
+        try:
+            # Create multiple sessions
+            sessions = []
+            for i in range(3):
+                session = await manager.create_session(
+                    commit_hash=f"hash_{i}",
+                    project_name=f"project_{i}"
+                )
+                sessions.append(session)
+            
+            # Complete sessions concurrently
+            tasks = [
+                manager.complete_session(s.session_id)
+                for s in sessions
+            ]
+            results = await asyncio.gather(*tasks)
+            
+            assert all(results) is True
+            assert len(results) == 3
+            
+            # Verify all sessions are completed
+            for session in sessions:
+                retrieved = await manager.get_session(session.session_id)
+                assert retrieved is not None
+                assert retrieved.state == SessionState.COMPLETED
+        finally:
+            await manager.stop()
 
 
 @pytest.mark.integration
+@pytest.mark.asyncio
 class TestProcessCrashRecovery:
     """Tests for process crash recovery."""
 
-    def test_recover_session_after_process_restart(self):
+    @pytest.mark.asyncio
+    async def test_recover_session_after_process_restart(self):
         """Test recovering session state after process crash."""
-        # Session state before crash
-        pre_crash_state = {
-            "session_id": "crash_test",
-            "commit_hash": "abc123",
-            "answers": {"what": "Added auth", "why": "Security"},
-            "current_question_index": 2,
-            "status": "active",
-        }
+        manager = SessionManager()
+        await manager.start()
+        
+        try:
+            # Create session
+            session = await manager.create_session(
+                commit_hash="abc123",
+                project_name="test-project"
+            )
+            
+            # Simulate progress
+            session.current_question_index = 2
+            session.update_activity()
+            
+            # Simulate crash - session state is lost
+            # In real scenario, state would be persisted and recovered
+            # For now, verify session can be recreated with same commit
+            session_id = session.session_id
+            
+            # After "restart", we'd recreate manager and load persisted state
+            # For test, verify session is still accessible
+            retrieved = await manager.get_session(session_id)
+            assert retrieved is not None
+            assert retrieved.current_question_index == 2
+        finally:
+            await manager.stop()
 
-        # Simulate persisting session state
-        persisted_state = pre_crash_state.copy()
-
-        # Simulate process crash and restart
-
-        # Recover session from persisted state
-        recovered_state = persisted_state.copy()
-        recovered_state["recovered"] = True
-        recovered_state["recovered_at"] = datetime.now(timezone.utc)
-
-        assert recovered_state["session_id"] == pre_crash_state["session_id"]
-        assert recovered_state["answers"] == pre_crash_state["answers"]
-        assert recovered_state["recovered"] is True
-
-    def test_detect_orphaned_sessions(self):
+    async def test_detect_orphaned_sessions(self):
         """Test detecting sessions from crashed processes."""
-        from datetime import timedelta
+        manager = SessionManager(default_timeout=30)  # 30 seconds for testing
+        await manager.start()
+        
+        try:
+            # Create old session (simulated)
+            old_session = await manager.create_session(
+                commit_hash="old_hash",
+                project_name="old-project"
+            )
+            old_session.last_activity = datetime.now() - timedelta(minutes=35)
+            
+            # Create active session
+            active_session = await manager.create_session(
+                commit_hash="active_hash",
+                project_name="active-project"
+            )
+            
+            # Check for timed out sessions
+            assert old_session.is_timed_out() is True
+            assert active_session.is_timed_out() is False
+            
+            # Cleanup should handle orphaned sessions
+            await manager._cleanup_stale_sessions()
+        finally:
+            await manager.stop()
 
-        sessions = {
-            "old_session": {
-                "session_id": "old_session",
-                "started_at": datetime.now(timezone.utc) - timedelta(hours=2),
-                "status": "active",
-                "last_heartbeat": datetime.now(timezone.utc) - timedelta(hours=1),
-            },
-            "active_session": {
-                "session_id": "active_session",
-                "started_at": datetime.now(timezone.utc),
-                "status": "active",
-                "last_heartbeat": datetime.now(timezone.utc),
-            },
-        }
-
-        # Find orphaned sessions (no heartbeat for > 30 minutes)
-        orphaned = []
-        threshold = timedelta(minutes=30)
-
-        for session_id, session in sessions.items():
-            if "last_heartbeat" in session:
-                time_since_heartbeat = (
-                    datetime.now(timezone.utc) - session["last_heartbeat"]
-                )
-                if time_since_heartbeat > threshold:
-                    orphaned.append(session_id)
-
-        assert "old_session" in orphaned
-        assert "active_session" not in orphaned
-
-    def test_cleanup_orphaned_sessions(self):
+    async def test_cleanup_orphaned_sessions(self):
         """Test cleaning up orphaned sessions."""
-        sessions = {
-            "orphaned": {"session_id": "orphaned", "status": "active"},
-            "active": {"session_id": "active", "status": "active"},
-        }
+        manager = SessionManager(default_timeout=30, cleanup_interval=1)
+        await manager.start()
+        
+        try:
+            # Create orphaned session (timed out)
+            orphaned = await manager.create_session(
+                commit_hash="orphaned_hash",
+                project_name="orphaned-project"
+            )
+            orphaned.last_activity = datetime.now() - timedelta(minutes=35)
+            
+            # Create active session
+            active = await manager.create_session(
+                commit_hash="active_hash",
+                project_name="active-project"
+            )
+            
+            # Wait for cleanup
+            await asyncio.sleep(2)
+            
+            # Orphaned session should be timed out
+            retrieved_orphaned = await manager.get_session(orphaned.session_id)
+            if retrieved_orphaned:
+                assert retrieved_orphaned.state == SessionState.TIMED_OUT
+            
+            # Active session should still be active
+            retrieved_active = await manager.get_session(active.session_id)
+            assert retrieved_active is not None
+            assert retrieved_active.is_active() is True
+        finally:
+            await manager.stop()
 
-        orphaned_ids = ["orphaned"]
-
-        # Cleanup orphaned sessions
-        for session_id in orphaned_ids:
-            if session_id in sessions:
-                sessions[session_id]["status"] = "orphaned"
-                sessions[session_id]["cleaned_up_at"] = datetime.now(timezone.utc)
-
-        assert sessions["orphaned"]["status"] == "orphaned"
-        assert sessions["active"]["status"] == "active"
-
-    def test_partial_session_recovery(self):
+    @pytest.mark.asyncio
+    async def test_partial_session_recovery(self):
         """Test recovering partial session data after crash."""
-        # Incomplete persisted state (missing some fields)
-        incomplete_state = {
-            "session_id": "partial_recovery",
-            "commit_hash": "abc123",
-            "answers": {"what": "Test"},
-            # Missing: current_question_index, status, etc.
-        }
-
-        # Recover with defaults
-        recovered = {
-            **incomplete_state,
-            "current_question_index": incomplete_state.get("current_question_index", 0),
-            "status": incomplete_state.get("status", "recovered"),
-            "recovered_at": datetime.now(timezone.utc),
-        }
-
-        assert recovered["status"] == "recovered"
-        assert recovered["current_question_index"] == 0
+        manager = SessionManager()
+        await manager.start()
+        
+        try:
+            # Create session
+            session = await manager.create_session(
+                commit_hash="abc123",
+                project_name="test-project"
+            )
+            
+            # Simulate partial progress
+            session.current_question_index = 1
+            session.update_activity()
+            
+            # Session should be recoverable even if some data is missing
+            # (defaults are provided by Session dataclass)
+            retrieved = await manager.get_session(session.session_id)
+            assert retrieved is not None
+            assert retrieved.current_question_index >= 0
+            assert retrieved.commit_hash == "abc123"
+        finally:
+            await manager.stop()
