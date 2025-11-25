@@ -115,6 +115,9 @@ The default reflection includes:
 5. **Learning** (text) - Optional
    - What did you learn from this work?
 
+6. **Adjustments** (text) - Optional
+   - What would you want the agent(s) to do differently?
+
 Questions are fully configurable via the config file.
 
 ## Data Storage
