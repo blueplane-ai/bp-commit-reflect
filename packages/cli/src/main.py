@@ -101,12 +101,9 @@ def main(argv: Optional[list] = None) -> int:
         from .mcp_mode import run_mcp_mode
         return run_mcp_mode()
     else:
-        # Interactive CLI mode (to be implemented in Track B)
-        print("Interactive CLI mode - to be implemented in Track B")
-        print(f"Project: {args.project}")
-        print(f"Branch: {args.branch}")
-        print(f"Commit: {args.commit}")
-        return 0
+        # Interactive CLI mode
+        from .cli_mode import run_interactive_mode
+        return run_interactive_mode(args)
 
 
 if __name__ == "__main__":

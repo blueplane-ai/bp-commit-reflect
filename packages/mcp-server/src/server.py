@@ -329,6 +329,7 @@ class MCPReflectionServer:
         self,
         limit: int = 10,
         project_name: Optional[str] = None,
+        since: Optional[str] = None,
         **kwargs
     ) -> Dict[str, Any]:
         """
@@ -337,20 +338,117 @@ class MCPReflectionServer:
         Args:
             limit: Maximum number of reflections to return
             project_name: Optional project name filter
+            since: Optional ISO timestamp to filter reflections since
             **kwargs: Additional filters
 
         Returns:
             Dictionary with list of recent reflections
         """
         try:
-            # This would query the storage backend
-            # For now, return placeholder
-            return {
+            # Import storage utilities
+            from packages.shared.storage.factory import create_storage_from_config
+            from packages.shared.types.config import StorageConfig, Config
+            from packages.shared.types.storage import QueryOptions
+            from datetime import datetime, timezone
+
+            # Load default configuration or try common paths
+            config = Config()
+
+            # Try to load config from common locations
+            config_paths = [
+                Path('.commit-reflect.json'),
+                Path.home() / '.commit-reflect' / 'config.json',
+            ]
+
+            for config_path in config_paths:
+                if config_path.exists():
+                    try:
+                        import json
+                        with open(config_path, 'r') as f:
+                            config_data = json.load(f)
+                            if 'storage' in config_data:
+                                config.storage = [
+                                    StorageConfig(**s) if isinstance(s, dict) else s
+                                    for s in config_data['storage']
+                                ]
+                            break
+                    except Exception as e:
+                        logger.warning(f"Failed to load config from {config_path}: {e}")
+
+            # If no config found, use defaults
+            if not config.storage:
+                config.storage = [
+                    StorageConfig(
+                        backend='jsonl',
+                        path='.commit-reflections.jsonl',
+                        enabled=True,
+                    )
+                ]
+
+            # Try each enabled storage backend
+            all_reflections = []
+            errors = []
+
+            for storage_config in config.storage:
+                if not storage_config.enabled:
+                    continue
+
+                try:
+                    storage = create_storage_from_config(storage_config)
+
+                    # Build query options
+                    query_opts = QueryOptions(limit=limit * 2)  # Get extra in case we filter
+
+                    # Query storage
+                    reflections = storage.read_recent(**query_opts.to_dict())
+                    storage.close()
+
+                    # Apply filters
+                    for reflection in reflections:
+                        # Project filter
+                        if project_name and reflection.get('project') != project_name:
+                            continue
+
+                        # Time filter
+                        if since:
+                            try:
+                                since_dt = datetime.fromisoformat(since.replace('Z', '+00:00'))
+                                reflection_dt = datetime.fromisoformat(
+                                    reflection.get('timestamp', '').replace('Z', '+00:00')
+                                )
+                                if reflection_dt < since_dt:
+                                    continue
+                            except (ValueError, AttributeError):
+                                pass
+
+                        all_reflections.append(reflection)
+
+                    # We got results from this backend, that's enough
+                    if all_reflections:
+                        break
+
+                except Exception as e:
+                    logger.warning(f"Failed to query {storage_config.backend}: {e}")
+                    errors.append(f"{storage_config.backend}: {str(e)}")
+
+            # Sort by timestamp (most recent first) and limit
+            all_reflections.sort(
+                key=lambda r: r.get('timestamp', ''),
+                reverse=True
+            )
+            all_reflections = all_reflections[:limit]
+
+            result = {
                 "success": True,
-                "reflections": [],
-                "count": 0,
-                "message": "Query successful"
+                "reflections": all_reflections,
+                "count": len(all_reflections),
+                "message": f"Found {len(all_reflections)} reflection(s)"
             }
+
+            if errors:
+                result["warnings"] = errors
+
+            return result
 
         except Exception as e:
             logger.error(f"Error getting recent reflections: {e}")

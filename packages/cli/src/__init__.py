@@ -13,6 +13,12 @@ from .errors import (
     RecoveryManager,
 )
 from .progress import ProgressIndicator
+from .session import ReflectionSession, SessionState
+from .git_utils import (
+    get_commit_context,
+    get_current_branch,
+    GitError,
+)
 
 __all__ = [
     "ValidationError",
@@ -24,4 +30,9 @@ __all__ = [
     "ConfigurationError",
     "RecoveryManager",
     "ProgressIndicator",
+    "ReflectionSession",
+    "SessionState",
+    "get_commit_context",
+    "get_current_branch",
+    "GitError",
 ]
