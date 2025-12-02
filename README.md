@@ -263,13 +263,17 @@ pytest
 ### Running Locally
 
 ```bash
-# Run CLI in development mode
-cd packages/cli
-python -m commit_reflect --project test --branch main --commit HEAD
+# First, install in development mode from the project root
+pip install -e ".[dev]"
+
+# Run CLI using the installed console script
+commit-reflect --project test --branch main --commit HEAD
+
+# Or run directly with Python from project root
+PYTHONPATH=packages python -m cli.src.main --project test --branch main --commit HEAD
 
 # Start MCP server
-cd packages/mcp-server
-python -m mcp_commit_reflect
+mcp-commit-reflect
 ```
 
 ## License

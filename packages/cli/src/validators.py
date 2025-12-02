@@ -1,6 +1,7 @@
 """Input validation for reflection questions and answers."""
 
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple, Union
+from shared.types.question import Question, QuestionType
 
 
 class ValidationError(Exception):
@@ -109,14 +110,14 @@ def validate_text(
 
 
 def validate_question_answer(
-    question: Dict[str, Any],
+    question: Union[Question, Dict[str, Any]],
     answer: Any
 ) -> Tuple[Any, Optional[str]]:
     """
     Validate an answer based on question configuration.
 
     Args:
-        question: Question configuration dictionary
+        question: Question object or configuration dictionary
         answer: User's answer
 
     Returns:
@@ -125,23 +126,36 @@ def validate_question_answer(
     Raises:
         ValidationError: If validation fails
     """
-    question_type = question.get("type", "text")
-    question_id = question.get("id", "unknown")
-    optional = question.get("optional", False)
+    # Handle both Question objects and dictionaries
+    if isinstance(question, Question):
+        question_type = question.question_type.value if isinstance(question.question_type, QuestionType) else question.question_type
+        question_id = question.id
+        optional = not question.required
+        min_val = question.min_value if question.min_value is not None else 1
+        max_val = question.max_value if question.max_value is not None else 5
+        # Get validation rules if they exist
+        validation_rules = question.validation_rules or {}
+        max_length = validation_rules.get("max_length")
+        min_length = validation_rules.get("min_length")
+    else:
+        # Legacy dictionary support
+        question_type = question.get("type", "text")
+        question_id = question.get("id", "unknown")
+        optional = question.get("optional", False)
+        min_val = question.get("range", [1, 5])[0]
+        max_val = question.get("range", [1, 5])[1]
+        max_length = question.get("max_length")
+        min_length = question.get("min_length")
 
     # Handle skip for optional questions
     if optional and (answer is None or str(answer).strip().lower() in ["skip", ""]):
         return None, None
 
     # Validate based on question type
-    if question_type == "scale":
-        min_val = question.get("range", [1, 5])[0]
-        max_val = question.get("range", [1, 5])[1]
+    if question_type in ("scale", "rating"):
         return validate_scale(answer, min_val, max_val, question_id)
 
-    elif question_type == "text":
-        max_length = question.get("max_length")
-        min_length = question.get("min_length")
+    elif question_type in ("text", "multiline"):
         return validate_text(
             answer,
             max_length=max_length,

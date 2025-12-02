@@ -72,7 +72,7 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "commit-reflect=cli.main:cli",
+            "commit-reflect=cli.src.main:main",
             "mcp-commit-reflect=mcp_server.__main__:main",
         ],
     },

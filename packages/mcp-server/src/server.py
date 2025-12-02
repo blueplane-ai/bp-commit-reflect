@@ -346,9 +346,9 @@ class MCPReflectionServer:
         """
         try:
             # Import storage utilities
-            from packages.shared.storage.factory import create_storage_from_config
-            from packages.shared.types.config import StorageConfig, Config
-            from packages.shared.types.storage import QueryOptions
+            from shared.storage.factory import create_storage_from_config
+            from shared.types.config import StorageConfig, Config
+            from shared.types.storage import QueryOptions
             from datetime import datetime, timezone
 
             # Load default configuration or try common paths

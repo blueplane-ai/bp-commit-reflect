@@ -9,12 +9,12 @@ from pathlib import Path
 from typing import Optional
 from argparse import Namespace
 
-from packages.shared.types.config import Config, StorageConfig
-from packages.shared.types.question import create_default_question_set
-from packages.shared.storage.factory import create_storage_from_config
-from packages.cli.src.session import ReflectionSession
-from packages.cli.src.git_utils import get_commit_context, GitError
-from packages.cli.src.prompts import (
+from shared.types.config import Config, StorageConfig, StorageBackendType
+from shared.types.question import create_default_question_set
+from shared.storage.factory import create_storage_from_config
+from cli.src.session import ReflectionSession
+from cli.src.git_utils import get_commit_context, GitError
+from cli.src.prompts import (
     display_welcome,
     display_error,
     display_validation_error,
@@ -23,8 +23,8 @@ from packages.cli.src.prompts import (
     confirm_submission,
     display_completion_message,
 )
-from packages.cli.src.errors import ConfigurationError, StorageError
-from packages.cli.src.progress import ProgressIndicator
+from cli.src.errors import ConfigurationError, StorageError
+from cli.src.progress import ProgressIndicator
 
 
 def load_config(config_path: Optional[str], args: Namespace) -> Config:
@@ -47,45 +47,29 @@ def load_config(config_path: Optional[str], args: Namespace) -> Config:
     # Load from file if provided
     if config_path:
         try:
-            import json
-            with open(config_path, 'r') as f:
-                config_data = json.load(f)
-                # Merge config_data into config (simplified for now)
-                if 'storage' in config_data:
-                    config.storage = [
-                        StorageConfig(**s) if isinstance(s, dict) else s
-                        for s in config_data['storage']
-                    ]
+            config = Config.load_from_file(Path(config_path))
         except Exception as e:
             raise ConfigurationError(f"Failed to load config file: {e}") from e
 
     # Override with command-line arguments
     if args.storage:
         backends = args.storage.split(',')
-        config.storage = []
+        config.storage_backends = []
         for backend in backends:
             if backend == 'jsonl':
                 path = args.jsonl_path or '.commit-reflections.jsonl'
-                config.storage.append(StorageConfig(
-                    backend='jsonl',
+                config.storage_backends.append(StorageConfig(
+                    backend_type=StorageBackendType.JSONL,
                     path=path,
                     enabled=True,
                 ))
-            elif backend == 'database':
+            elif backend == 'sqlite' or backend == 'database':
                 path = args.db_path or '~/.commit-reflect/reflections.db'
-                config.storage.append(StorageConfig(
-                    backend='sqlite',
+                config.storage_backends.append(StorageConfig(
+                    backend_type=StorageBackendType.SQLITE,
                     path=path,
                     enabled=True,
                 ))
-
-    # Ensure at least one storage backend
-    if not config.storage:
-        config.storage = [StorageConfig(
-            backend='jsonl',
-            path='.commit-reflections.jsonl',
-            enabled=True,
-        )]
 
     return config
 
@@ -119,7 +103,7 @@ def run_interactive_mode(args: Namespace) -> int:
         project_name = args.project
         if not project_name:
             try:
-                from packages.cli.src.git_utils import get_repository_root
+                from cli.src.git_utils import get_repository_root
                 repo_root = get_repository_root()
                 project_name = repo_root.name
             except:
@@ -182,7 +166,7 @@ def run_interactive_mode(args: Namespace) -> int:
 
         # Save to storage backends
         storage_info_lines = []
-        for storage_config in config.storage:
+        for storage_config in config.storage_backends:
             if not storage_config.enabled:
                 continue
 
@@ -192,7 +176,7 @@ def run_interactive_mode(args: Namespace) -> int:
                 storage.close()
 
                 if success:
-                    backend_name = storage_config.backend
+                    backend_name = storage_config.backend_type.value
                     if backend_name == 'jsonl':
                         storage_info_lines.append(f"✓ Saved to JSONL: {storage_config.path}")
                     elif backend_name == 'sqlite':
@@ -200,11 +184,11 @@ def run_interactive_mode(args: Namespace) -> int:
                     else:
                         storage_info_lines.append(f"✓ Saved to {backend_name}")
                 else:
-                    display_error(f"Failed to write to {storage_config.backend} storage")
+                    display_error(f"Failed to write to {storage_config.backend_type.value} storage")
                     return 1
 
             except Exception as e:
-                display_error(f"Storage error ({storage_config.backend}): {e}")
+                display_error(f"Storage error ({storage_config.backend_type.value}): {e}")
                 return 1
 
         # Display completion

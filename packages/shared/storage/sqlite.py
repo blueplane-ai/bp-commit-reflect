@@ -13,8 +13,8 @@ from typing import List, Optional, Dict, Any
 from uuid import UUID
 from contextlib import contextmanager
 
+from .base import StorageBackend as BaseStorageBackend
 from shared.types.storage import (
-    StorageBackend,
     StorageResult,
     StorageError,
     StorageConnectionError,
@@ -30,23 +30,26 @@ from shared.types.reflection import Reflection
 SCHEMA_VERSION = 1
 
 
-class SQLiteStorage(StorageBackend):
+class SQLiteStorage(BaseStorageBackend):
     """
     SQLite storage backend implementation.
 
     Provides persistent, queryable storage with indices for performance.
     """
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: Dict[str, Any] | str):
         """
         Initialize SQLite storage backend.
 
         Args:
-            config: Configuration including 'path' for database file
+            config: Configuration dict with 'path' or a string path
         """
-        super().__init__(config)
-        self.db_path = Path(config.get('path', '~/.commit-reflect/reflections.db')).expanduser()
+        if isinstance(config, str):
+            self.db_path = Path(config).expanduser()
+        else:
+            self.db_path = Path(config.get('path', '~/.commit-reflect/reflections.db')).expanduser()
         self.connection = None
+        self._initialized = False
 
     @contextmanager
     def get_connection(self):
@@ -209,19 +212,15 @@ class SQLiteStorage(StorageBackend):
             # Record migration
             cursor.execute("INSERT INTO schema_version (version) VALUES (1)")
 
-    def close(self) -> StorageResult:
+    def close(self) -> None:
         """
-        Close database connections and clean up resources.
-
-        Returns:
-            StorageResult indicating success or failure
+        Close database connections and clean up resources (legacy interface).
         """
         try:
             # Connection pooling would be cleaned up here
             self._initialized = False
-            return StorageResult.success_result("SQLite storage closed")
-        except Exception as e:
-            return StorageResult.error_result(f"Error closing SQLite storage: {e}", error=e)
+        except Exception:
+            pass  # Silently fail on close
 
     def save_reflection(self, reflection: Reflection) -> StorageResult:
         """
@@ -613,3 +612,77 @@ class SQLiteStorage(StorageBackend):
 
         except Exception as e:
             raise StorageReadError(f"Failed to convert row to reflection: {e}")
+
+    # Legacy interface methods (for compatibility with old StorageBackend)
+    def write(self, reflection: Dict[str, Any]) -> bool:
+        """
+        Write a reflection to storage (legacy interface).
+
+        Args:
+            reflection: Complete reflection data as dictionary
+
+        Returns:
+            True if write succeeded, False otherwise
+        """
+        try:
+            # Initialize if not already done
+            if not self._initialized:
+                result = self.initialize()
+                if not result.success:
+                    return False
+
+            # Convert dict to Reflection object
+            reflection_obj = Reflection.from_dict(reflection)
+
+            # Save using new interface
+            result = self.save_reflection(reflection_obj)
+            return result.success
+
+        except Exception:
+            return False
+
+    def read_recent(
+        self,
+        limit: int = 10,
+        project: Optional[str] = None,
+        since: Optional[datetime] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Read recent reflections from storage (legacy interface).
+
+        Args:
+            limit: Maximum number of reflections to return
+            project: Filter by project name (optional)
+            since: Filter reflections since this timestamp (optional)
+
+        Returns:
+            List of reflection dictionaries
+        """
+        try:
+            # Initialize if not already done
+            if not self._initialized:
+                self.initialize()
+
+            # Build query options
+            options = QueryOptions(
+                limit=limit,
+                sort_by="created_at",
+                sort_order=SortOrder.DESC,
+            )
+
+            if project:
+                options.filter_by = {"project_name": project}
+
+            if since:
+                if options.filter_by is None:
+                    options.filter_by = {}
+                options.filter_by["since"] = since
+
+            # Query using new interface
+            reflections = self.query_reflections(options)
+
+            # Convert to dicts
+            return [r.to_dict() for r in reflections]
+
+        except Exception:
+            return []

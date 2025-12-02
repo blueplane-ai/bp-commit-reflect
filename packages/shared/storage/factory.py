@@ -336,6 +336,18 @@ class MultiBackendCoordinator:
 # Global factory instance
 _default_factory = StorageFactory()
 
+# Auto-register built-in backends
+def _register_builtin_backends() -> None:
+    """Register built-in storage backends with the default factory."""
+    from shared.storage.jsonl import JSONLStorage
+    from shared.storage.sqlite import SQLiteStorage
+
+    _default_factory.register_backend("jsonl", JSONLStorage)
+    _default_factory.register_backend("sqlite", SQLiteStorage)
+
+# Register backends on module import
+_register_builtin_backends()
+
 
 def get_default_factory() -> StorageFactory:
     """
@@ -358,3 +370,21 @@ def register_backend(
         backend_class: Backend class
     """
     _default_factory.register_backend(backend_type, backend_class)
+
+
+def create_storage_from_config(config: StorageConfig) -> StorageBackend:
+    """
+    Create a storage backend from configuration using the default factory.
+
+    This is a convenience function that wraps the default factory's create_backend method.
+
+    Args:
+        config: Storage configuration
+
+    Returns:
+        Initialized storage backend instance
+
+    Raises:
+        StorageError: If backend creation fails
+    """
+    return _default_factory.create_backend(config)

@@ -10,7 +10,7 @@ import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, List, Dict, Tuple
-from packages.shared.types.reflection import CommitContext
+from shared.types.reflection import CommitContext
 
 
 class GitError(Exception):

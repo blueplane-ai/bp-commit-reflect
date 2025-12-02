@@ -11,10 +11,10 @@ from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
 
-from packages.shared.types.question import Question, QuestionSet, create_default_question_set
-from packages.shared.types.reflection import Reflection, CommitContext, SessionMetadata
-from packages.shared.types.config import Config
-from packages.cli.src.validators import validate_question_answer, ValidationError
+from shared.types.question import Question, QuestionSet, create_default_question_set
+from shared.types.reflection import Reflection, CommitContext, SessionMetadata
+from shared.types.config import Config
+from cli.src.validators import validate_question_answer, ValidationError
 
 
 @dataclass
@@ -261,14 +261,32 @@ class ReflectionSession:
             session_id=uuid.UUID(self.state.session_id),
             started_at=self.state.started_at,
             completed_at=datetime.now(timezone.utc),
-            question_set_version=self.question_set.version,
+            additional_context={
+                "question_set_version": self.question_set.version,
+            } if hasattr(self.question_set, 'version') else None,
         )
+
+        # Convert answers dict to list of ReflectionAnswer objects
+        from shared.types.reflection import ReflectionAnswer
+        answer_list = []
+        for question in self.question_set.questions:
+            if question.id in self.state.answers:
+                answer_value = self.state.answers[question.id]
+                # Convert answer value to string if it's not already
+                answer_str = str(answer_value) if answer_value is not None else ""
+                answer_list.append(ReflectionAnswer(
+                    question_id=question.id,
+                    question_text=question.text,
+                    answer=answer_str,
+                    answered_at=self.state.started_at,  # We don't track individual answer times
+                ))
 
         # Create the reflection
         now = datetime.now(timezone.utc)
         reflection = Reflection(
+            id=uuid.uuid4(),
             commit_context=self.state.commit_context,
-            answers=self.state.answers,
+            answers=answer_list,
             session_metadata=session_metadata,
             created_at=now,
             updated_at=now,

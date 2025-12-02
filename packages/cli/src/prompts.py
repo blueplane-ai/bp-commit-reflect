@@ -7,8 +7,8 @@ collecting their answers in an interactive terminal session.
 
 import sys
 from typing import Optional, Any
-from packages.shared.types.question import Question, QuestionType
-from packages.cli.src.progress import ProgressIndicator
+from shared.types.question import Question, QuestionType
+from cli.src.progress import ProgressIndicator
 
 
 def format_question_prompt(question: Question, progress: tuple[int, int]) -> str:
