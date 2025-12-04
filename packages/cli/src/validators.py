@@ -203,8 +203,8 @@ def validate_config(config: Dict[str, Any]) -> Tuple[Dict[str, Any], list]:
     if not questions:
         warnings.append("No questions defined - using defaults")
 
-    # Ensure required questions are present
-    required_ids = ["ai_synergy", "confidence", "experience"]
+    # Ensure required questions are present (v2.0 question set)
+    required_ids = ["work_type", "difficulty", "ai_effectiveness", "who_drove", "confidence", "experience", "outcome"]
     question_ids = [q.get("id") for q in questions]
 
     for req_id in required_ids:

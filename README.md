@@ -98,22 +98,36 @@ async def after_shell_execution(command, output, exit_code):
 
 ## Question Set
 
-The default reflection includes:
+The default reflection includes these 10 questions (voice response encouraged, say each question number you are answering, and go in order):
 
-1. **AI Synergy** (scale 1-5) - Required
-   - How well did you and AI work together on this commit?
+1. **What kind of work does this commit primarily represent?** - Required (Choice)
+   - Options: New Feature, Bug fixing, Refactor, Tests, Docs, DevOps/infra/tooling, Other
 
-2. **Confidence** (scale 1-5) - Required
-   - How confident are you in these changes?
+2. **How difficult was this work for you?** - Required (Choice)
+   - Options: Easy, Moderate, Hard, Very Hard
 
-3. **Experience** (text, max 512 chars) - Required
-   - How did this work feel? What was the experience like?
+3. **How effective was AI collaboration on this commit?** - Required (Choice)
+   - Options: Very Low, Low, Medium, High, Very High
 
-4. **Blockers** (text) - Optional
-   - What blockers or friction did you encounter?
+4. **For this commit, who did most of the "driving"?** - Required (Choice)
+   - Options: Mostly me, Shared evenly, Mostly AI
 
-5. **Learning** (text) - Optional
-   - What did you learn from this work?
+5. **How confident are you that this commit is correct and safe to merge?** - Required (Choice)
+   - Options: Very Low, Low, High, Very High
+
+6. **How did this work feel?** - Required (Text)
+   - e.g., Smooth, Frustrating, Lots of back-and-forth, Flow state
+
+7. **Did you hit any blockers or friction on this commit? If yes, what best describes them?** - Optional (Multiple Choice)
+   - Options: AI misunderstanding, Missing requirements context, Tools/environment/infra issues, Codebase complexity/architecture confusion, My own clarity/changing direction, Other
+
+8. **Did you learn something worth remembering from this commit? If yes, what?** - Optional (Text)
+
+9. **For this commit, what should the agent do differently next time, if anything?** - Optional (Text)
+   - e.g., Ask clarifying questions; Be concise; Propose concrete code changes; Be opinionated; Slow down and verify assumptions; Surface more context like files/tests/docs automatically; Other
+
+10. **How would you describe the outcome of this commit?** - Required (Choice)
+    - Options: Completed what I intended, Partial progress, Unblocks something else, Spike, Fixed fallout from earlier changes
 
 Questions are fully configurable via the config file.
 

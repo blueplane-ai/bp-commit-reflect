@@ -51,6 +51,15 @@ class SQLiteStorage(BaseStorageBackend):
         self.connection = None
         self._initialized = False
 
+    def is_initialized(self) -> bool:
+        """
+        Check if the storage backend has been initialized.
+
+        Returns:
+            True if initialized, False otherwise
+        """
+        return self._initialized
+
     @contextmanager
     def get_connection(self):
         """
@@ -212,15 +221,75 @@ class SQLiteStorage(BaseStorageBackend):
             # Record migration
             cursor.execute("INSERT INTO schema_version (version) VALUES (1)")
 
-    def close(self) -> None:
+    def close(self) -> StorageResult:
         """
-        Close database connections and clean up resources (legacy interface).
+        Close database connections and clean up resources.
+
+        Returns:
+            StorageResult indicating success or failure
         """
         try:
             # Connection pooling would be cleaned up here
             self._initialized = False
-        except Exception:
-            pass  # Silently fail on close
+            return StorageResult.success_result("SQLite storage closed successfully")
+        except Exception as e:
+            return StorageResult.error_result(f"Failed to close SQLite storage: {e}", error=e)
+
+    def validate_reflection(self, reflection: Reflection) -> tuple[bool, Optional[str]]:
+        """
+        Validate a reflection object before saving.
+
+        Args:
+            reflection: The reflection to validate
+
+        Returns:
+            Tuple of (is_valid, error_message). error_message is None if valid.
+        """
+        try:
+            # Check required fields
+            if not reflection.id:
+                return False, "Reflection ID is required"
+
+            if not reflection.commit_context:
+                return False, "Commit context is required"
+
+            if not reflection.commit_context.commit_hash:
+                return False, "Commit hash is required"
+
+            if not reflection.commit_context.commit_message:
+                return False, "Commit message is required"
+
+            if not reflection.commit_context.branch:
+                return False, "Branch is required"
+
+            if not reflection.commit_context.author_name:
+                return False, "Author name is required"
+
+            if not reflection.commit_context.author_email:
+                return False, "Author email is required"
+
+            if not reflection.session_metadata:
+                return False, "Session metadata is required"
+
+            if not reflection.session_metadata.session_id:
+                return False, "Session ID is required"
+
+            # Validate answers - at least one answer is required
+            if not reflection.answers or len(reflection.answers) == 0:
+                return False, "At least one answer is required"
+
+            for answer in reflection.answers:
+                if not answer.question_id:
+                    return False, "Answer question_id is required"
+                if not answer.question_text:
+                    return False, "Answer question_text is required"
+                if answer.answer is None:
+                    return False, "Answer value is required"
+
+            return True, None
+
+        except Exception as e:
+            return False, f"Validation error: {e}"
 
     def save_reflection(self, reflection: Reflection) -> StorageResult:
         """

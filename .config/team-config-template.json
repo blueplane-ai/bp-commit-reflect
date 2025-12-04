@@ -1,49 +1,99 @@
 {
   "description": "Team configuration template for commit reflection system",
-  "version": "1.0",
+  "version": "2.0",
   "storage": ["jsonl", "database"],
   "jsonl_path": ".commit-reflections.jsonl",
   "db_path": "~/.commit-reflect/reflections.db",
   "questions": [
     {
-      "id": "ai_synergy",
-      "prompt": "How well did you and AI work together on this commit?",
-      "type": "scale",
-      "range": [1, 5],
-      "optional": false,
-      "help_text": "1 = AI hindered progress, 5 = Perfect collaboration"
+      "id": "work_type",
+      "text": "What kind of work does this commit primarily represent?",
+      "type": "choice",
+      "options": ["New Feature", "Bug fixing", "Refactor", "Tests", "Docs", "DevOps/infra/tooling", "Other"],
+      "required": true,
+      "help_text": "Select the category that best describes this commit",
+      "order": 1
+    },
+    {
+      "id": "difficulty",
+      "text": "How difficult was this work for you?",
+      "type": "choice",
+      "options": ["Easy", "Moderate", "Hard", "Very Hard"],
+      "required": true,
+      "help_text": "Assess the difficulty level of this work",
+      "order": 2
+    },
+    {
+      "id": "ai_effectiveness",
+      "text": "How effective was AI collaboration on this commit?",
+      "type": "choice",
+      "options": ["Very Low", "Low", "Medium", "High", "Very High"],
+      "required": true,
+      "help_text": "Rate how helpful AI was in completing this work",
+      "order": 3
+    },
+    {
+      "id": "who_drove",
+      "text": "For this commit, who did most of the \"driving\"?",
+      "type": "choice",
+      "options": ["Mostly me", "Shared evenly", "Mostly AI"],
+      "required": true,
+      "help_text": "Who was primarily directing the work?",
+      "order": 4
     },
     {
       "id": "confidence",
-      "prompt": "How confident are you in these changes?",
-      "type": "scale",
-      "range": [1, 5],
-      "optional": false,
-      "help_text": "1 = Not confident, 5 = Very confident"
+      "text": "How confident are you that this commit is correct and safe to merge?",
+      "type": "choice",
+      "options": ["Very Low", "Low", "High", "Very High"],
+      "required": true,
+      "help_text": "Your confidence in the correctness and safety of these changes",
+      "order": 5
     },
     {
       "id": "experience",
-      "prompt": "How did this work feel? What was the experience like?",
-      "type": "text",
-      "max_length": 512,
-      "optional": false,
-      "help_text": "Briefly describe your development experience"
+      "text": "How did this work feel?",
+      "type": "multiline",
+      "required": true,
+      "help_text": "Describe your experience (e.g. Smooth, Frustrating, Lots of back-and-forth, Flow state)",
+      "placeholder": "e.g., Smooth, Frustrating, Lots of back-and-forth, Flow state",
+      "order": 6
     },
     {
-      "id": "blockers",
-      "prompt": "What blockers or friction did you encounter? (optional)",
-      "type": "text",
-      "max_length": 512,
-      "optional": true,
-      "help_text": "Type 'skip' to skip this question"
+      "id": "blockers_and_friction",
+      "text": "Did you hit any blockers or friction on this commit? If yes, what best describes them?",
+      "type": "multichoice",
+      "options": ["AI misunderstanding", "Missing requirements context", "Tools/environment/infra issues", "Codebase complexity/architecture confusion", "My own clarity/changing direction", "Other"],
+      "required": false,
+      "help_text": "Select all that apply (or skip if no blockers)",
+      "order": 7
     },
     {
       "id": "learning",
-      "prompt": "What did you learn from this work? (optional)",
-      "type": "text",
-      "max_length": 512,
-      "optional": true,
-      "help_text": "Type 'skip' to skip this question"
+      "text": "Did you learn something worth remembering from this commit? If yes, what?",
+      "type": "multiline",
+      "required": false,
+      "help_text": "Share any insights or knowledge gained",
+      "placeholder": "I learned that...",
+      "order": 8
+    },
+    {
+      "id": "agent_feedback",
+      "text": "For this commit, what should the agent do differently next time, if anything?",
+      "type": "multiline",
+      "required": false,
+      "help_text": "e.g., Ask clarifying questions; Be concise; Propose concrete code changes; Be opinionated; Slow down and verify assumptions; Surface more context like files/tests/docs automatically; Other",
+      "placeholder": "e.g., Ask clarifying questions, Be concise, Propose concrete code changes...",
+      "order": 9
+    },
+    {
+      "id": "outcome",
+      "text": "How would you describe the outcome of this commit?",
+      "type": "choice",
+      "options": ["Completed what I intended", "Partial progress", "Unblocks something else", "Spike", "Fixed fallout from earlier changes"],
+      "required": true,
+      "help_text": "What did this commit accomplish?",
+      "order": 10
     }
   ],
   "team_settings": {

@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from shared.types.question import Question, QuestionSet, create_default_question_set
 from shared.types.reflection import Reflection, CommitContext, SessionMetadata
 from shared.types.config import Config
-from cli.src.validators import validate_question_answer, ValidationError
+from .validators import validate_question_answer, ValidationError
 
 
 @dataclass

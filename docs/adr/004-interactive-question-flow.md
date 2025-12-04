@@ -8,11 +8,16 @@ Accepted
 
 When capturing commit reflections, we need to gather multiple pieces of information from the developer:
 
-1. AI synergy rating (scale 1-5)
-2. Confidence level (scale 1-5)
-3. Experience description (text, up to 512 chars)
-4. Blockers encountered (optional text)
-5. Learning moments (optional text)
+1. Work type (choice: New Feature, Bug fixing, Refactor, etc.)
+2. Difficulty level (choice: Easy, Moderate, Hard, Very Hard)
+3. AI effectiveness (choice: Very Low, Low, Medium, High, Very High)
+4. Who drove the work (choice: Mostly me, Shared evenly, Mostly AI)
+5. Confidence level (choice: Very Low, Low, High, Very High)
+6. Experience description (multiline text)
+7. Blockers and friction (optional multiple choice)
+8. Learning moments (optional text)
+9. Agent feedback (optional text)
+10. Outcome description (choice: Completed, Partial progress, etc.)
 
 We need to decide how to present these questions and collect responses. Options include:
 
@@ -55,27 +60,58 @@ Branch: feature/auth
 Files: src/auth/middleware.ts, tests/auth.test.ts
 ─────────────────────────────────────────────────
 
-Question 1 of 5
-❓ How well did you and AI work together on this? (1-5)
-   1 = AI hindered progress, 5 = Perfect collaboration
-> 4
+Question 1 of 10
+❓ What kind of work does this commit primarily represent?
+   Options: New Feature, Bug fixing, Refactor, Tests, Docs, DevOps/infra/tooling, Other
+> New Feature
 
-Question 2 of 5
-❓ How confident are you in these changes? (1-5)
-   1 = Needs review, 5 = Production ready
-> 5
+Question 2 of 10
+❓ How difficult was this work for you?
+   Options: Easy, Moderate, Hard, Very Hard
+> Moderate
 
-Question 3 of 5
-❓ How did this work feel? What was the experience like? (max 512 chars)
+Question 3 of 10
+❓ How effective was AI collaboration on this commit?
+   Options: Very Low, Low, Medium, High, Very High
+> High
+
+Question 4 of 10
+❓ For this commit, who did most of the "driving"?
+   Options: Mostly me, Shared evenly, Mostly AI
+> Shared evenly
+
+Question 5 of 10
+❓ How confident are you that this commit is correct and safe to merge?
+   Options: Very Low, Low, High, Very High
+> Very High
+
+Question 6 of 10
+❓ How did this work feel?
+   e.g., Smooth, Frustrating, Lots of back-and-forth, Flow state
 > Felt smooth once I got into it. The JWT library docs were clearer than expected.
 
-Question 4 of 5 (optional)
-❓ What blockers or friction did you encounter? (press Enter to skip)
+Question 7 of 10 (optional)
+❓ Did you hit any blockers or friction on this commit? If yes, what best describes them?
+   Options: AI misunderstanding, Missing requirements context, Tools/environment/infra issues,
+            Codebase complexity/architecture confusion, My own clarity/changing direction, Other
+   (press Enter to skip)
 > [Enter - skipped]
 
-Question 5 of 5 (optional)
-❓ What did you learn from this work? (press Enter to skip)
+Question 8 of 10 (optional)
+❓ Did you learn something worth remembering from this commit? If yes, what?
+   (press Enter to skip)
 > Learned about HttpOnly cookies and token rotation strategies
+
+Question 9 of 10 (optional)
+❓ For this commit, what should the agent do differently next time, if anything?
+   (press Enter to skip)
+> [Enter - skipped]
+
+Question 10 of 10
+❓ How would you describe the outcome of this commit?
+   Options: Completed what I intended, Partial progress, Unblocks something else, Spike,
+            Fixed fallout from earlier changes
+> Completed what I intended
 
 ✅ Reflection saved to .commit-reflections.jsonl
 ```
@@ -190,7 +226,7 @@ class MCPServer:
 
 ### Neutral
 
-- **5 questions minimum**: User must answer at least 3 required questions
+- **10 questions total**: User must answer 7 required questions, 3 optional
 - **Session-based**: Requires session management in MCP server
 - **Linear flow**: No branching or conditional questions (could be added later)
 
@@ -198,19 +234,24 @@ class MCPServer:
 
 ### All-at-Once Form
 
-Present all 5 questions together in a form, collect all answers at once.
+Present all 10 questions together in a form, collect all answers at once.
 
 **CLI Example:**
 ```
 Please provide the following reflections:
 
-1. AI synergy (1-5): ____
-2. Confidence (1-5): ____
-3. Experience (text): ____
-4. Blockers (optional): ____
-5. Learning (optional): ____
+1. Work type (choice): ____
+2. Difficulty (choice): ____
+3. AI effectiveness (choice): ____
+4. Who drove (choice): ____
+5. Confidence (choice): ____
+6. Experience (text): ____
+7. Blockers (optional multiple choice): ____
+8. Learning (optional text): ____
+9. Agent feedback (optional text): ____
+10. Outcome (choice): ____
 
-Submit answers (JSON): {"ai_synergy": 4, "confidence": 5, ...}
+Submit answers (JSON): {"work_type": "New Feature", "difficulty": "Moderate", ...}
 ```
 
 **Pros:**
@@ -234,14 +275,19 @@ Group questions into logical batches (e.g., ratings, then text responses).
 
 **Example:**
 ```
-Batch 1: Ratings
-1. AI synergy (1-5):
-2. Confidence (1-5):
+Batch 1: Categorical Questions
+1. Work type:
+2. Difficulty:
+3. AI effectiveness:
+4. Who drove:
+5. Confidence:
+6. Outcome:
 
-Batch 2: Reflections
-3. Experience:
-4. Blockers (optional):
-5. Learning (optional):
+Batch 2: Text Reflections
+7. Experience:
+8. Blockers (optional):
+9. Learning (optional):
+10. Agent feedback (optional):
 ```
 
 **Pros:**
@@ -346,19 +392,20 @@ class ReflectionSession:
 
 Each question type has validation:
 
-- **Scale (1-5)**: Must be integer 1-5
-- **Text**: Max 512 characters for experience, unlimited for optional
+- **Choice**: Must be one of the predefined options
+- **Multiple choice**: Must be a subset of predefined options
+- **Text/Multiline**: Unlimited length for most questions
 - **Optional**: Empty string or "skip" allowed
 
 Invalid answers prompt re-entry:
 
 ```
-Question 3 of 5
-❓ How did this work feel? (max 512 chars)
-> [700 character response]
+Question 1 of 10
+❓ What kind of work does this commit primarily represent?
+> Bug Fixing
 
-❌ Answer too long (700/512 characters). Please shorten your response.
-> [revised response]
+❌ Invalid choice. Please select one of: New Feature, Bug fixing, Refactor, Tests, Docs, DevOps/infra/tooling, Other
+> Bug fixing
 ```
 
 ### Skip Handling
