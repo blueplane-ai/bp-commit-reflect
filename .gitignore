@@ -57,7 +57,8 @@ coverage.xml
 dmypy.json
 
 # Project specific
-.commit-reflect/
+.commit-reflect/config.json
+.commit-reflections.jsonl
 reflections.jsonl
 *.db
 *.db-shm

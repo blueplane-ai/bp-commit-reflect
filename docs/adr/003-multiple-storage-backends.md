@@ -104,7 +104,7 @@ Learning: Learned about HttpOnly cookies
 
 **Configuration:**
 
-All backends are configured via `.commit-reflect.json`:
+All backends are configured via `.commit-reflect/config.json`:
 
 ```json
 {

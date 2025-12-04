@@ -12,7 +12,9 @@ ai-commit-reflect/
 ├── docs/                  # Documentation
 ├── examples/              # Example configurations and usage
 ├── tests/                 # Shared test infrastructure
-├── .config/               # Default configuration templates
+├── .commit-reflect/       # Configuration directory
+│   ├── config.json        # Project-level configuration
+│   └── examples/          # Example configurations
 └── [root config files]    # Project-level configuration
 ```
 
@@ -158,15 +160,17 @@ tests/
 └── conftest.py                    # Pytest configuration
 ```
 
-### `/.config` - Configuration Templates
+### `/.commit-reflect` - Configuration Directory
 
-Default configuration files and schemas.
+Project-level configuration and examples.
 
 ```
-.config/
-├── commit-reflect.example.json    # Example configuration file
-├── commit-reflect.schema.json     # JSON schema for validation
-└── default-questions.json         # Default question set
+.commit-reflect/
+├── config.json                    # Project-specific configuration
+└── examples/                      # Example configuration files
+    ├── minimal-config.json        # Minimal configuration example
+    ├── full-config.json           # Full configuration example
+    └── team-config.json           # Team configuration example
 ```
 
 ### Root Configuration Files
@@ -228,7 +232,8 @@ graph TD
 ```
 <project-root>/
 ├── .commit-reflections.jsonl      # JSONL reflection log
-├── .commit-reflect.json           # Project-specific config
+├── .commit-reflect/               # Configuration directory
+│   └── config.json                # Project-specific config
 └── .git/
     └── hooks/
         └── post-commit            # Optional git hook

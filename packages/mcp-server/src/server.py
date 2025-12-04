@@ -356,7 +356,7 @@ class MCPReflectionServer:
 
             # Try to load config from common locations
             config_paths = [
-                Path('.commit-reflect.json'),
+                Path('.commit-reflect') / 'config.json',
                 Path.home() / '.commit-reflect' / 'config.json',
             ]
 

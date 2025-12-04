@@ -100,11 +100,11 @@ class TestErrorMessages:
         
         error = ValidationError(
             "Invalid configuration",
-            help_text="Check .commit-reflect.json for syntax errors"
+            help_text="Check .commit-reflect/config.json for syntax errors"
         )
-        
+
         assert "Invalid configuration" in error.message
-        assert "Check .commit-reflect.json" in error.help_text
+        assert "Check .commit-reflect/config.json" in error.help_text
 
 
 class TestColorOutput:

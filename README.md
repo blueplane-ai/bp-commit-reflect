@@ -52,25 +52,73 @@ Exposes commit reflection capabilities to AI agents through the Model Context Pr
 
 ## Quick Start
 
-### Installation
+Get up and running in 5 minutes.
+
+### Step 1: Install
 
 ```bash
-# Install the CLI tool
 pip install commit-reflect
-
-# Install the MCP server
-pip install mcp-commit-reflect
 ```
 
-### Basic Usage
+### Step 2: Initialize
+
+In your git repository:
 
 ```bash
-# Capture a reflection for the latest commit
-commit-reflect --project my-app --branch main --commit HEAD
-
-# Configure your storage preferences
-commit-reflect config --storage jsonl,database --jsonl-path .reflections.jsonl
+cd your-project
+commit-reflect init
 ```
+
+This creates `.commit-reflect/config.json` with default settings.
+
+### Step 3: Make a Commit
+
+```bash
+git add .
+git commit -m "Your commit message"
+```
+
+### Step 4: Capture Your Reflection
+
+```bash
+commit-reflect --project my-app --commit HEAD
+```
+
+Answer the guided questions about your commit. The system will prompt you through each question interactively.
+
+### Step 5: View Your Reflections
+
+```bash
+# List all reflections
+commit-reflect list
+
+# Show details for a specific commit
+commit-reflect show <commit-hash>
+
+# Export to JSON
+commit-reflect export --format json > reflections.json
+```
+
+### Helpful Commands
+
+```bash
+# Validate your configuration
+commit-reflect validate-config
+
+# Get help
+commit-reflect --help
+
+# Check system status
+commit-reflect doctor
+```
+
+### Next Steps
+
+- **Customize questions**: Edit `.commit-reflect/config.json`
+- **Add multiple storage backends**: See [Configuration](#configuration) below
+- **Explore examples**: Check [examples/](examples/) for different configurations
+- **Set up IDE integration**: See [IDE Integration](#ide-integration) below
+- **Automate with git hooks**: Add to `.git/hooks/post-commit`
 
 ### IDE Integration
 
@@ -94,6 +142,18 @@ Add to `.cursor/hooks/after_shell_execution.py`:
 async def after_shell_execution(command, output, exit_code):
     # Monitors git commits and triggers reflection prompts
     pass
+```
+
+### MCP Server Setup
+
+For AI agent integration via Model Context Protocol:
+
+```bash
+# Install the MCP server
+pip install mcp-commit-reflect
+
+# Start the server
+mcp-commit-reflect
 ```
 
 ## Question Set
@@ -175,7 +235,7 @@ WHERE project = 'my-app'
 
 ## Configuration
 
-Create `.commit-reflect.json` in your project root or `~/.commit-reflect/config.json`:
+Create `.commit-reflect/config.json` in your project root or `~/.commit-reflect/config.json` in your home directory:
 
 ```json
 {
@@ -215,7 +275,9 @@ ai-commit-reflect/
 │   └── adr/                    # Architecture Decision Records
 ├── examples/                   # Example configurations and usage
 ├── tests/                      # Test suites
-└── .config/                    # Default configuration templates
+└── .commit-reflect/            # Configuration directory (project-level)
+    ├── config.json             # Main configuration file
+    └── examples/               # Example configurations
 ```
 
 ## Implementation Roadmap

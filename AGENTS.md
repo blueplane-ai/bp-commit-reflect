@@ -192,9 +192,9 @@ Key test scenarios:
 - **packages/ide-hooks/** - IDE integration hooks
 
 ### Configuration
-- **.commit-reflect.json** - Project-level configuration
+- **.commit-reflect/config.json** - Project-level configuration
 - **~/.commit-reflect/config.json** - User-level configuration
-- **.config/default-questions.json** - Default question set
+- **.commit-reflect/examples/** - Example configurations
 
 ## When Adding Features
 

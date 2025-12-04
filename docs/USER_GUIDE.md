@@ -61,7 +61,7 @@ cd your-project
 commit-reflect init
 ```
 
-This creates a default configuration file at `.config/commit-reflect.json`.
+This creates a default configuration file at `.commit-reflect/config.json`.
 
 ### 2. Make a commit
 
@@ -116,13 +116,12 @@ commit-reflect export --format json > reflections.json
 
 The system searches for configuration in this order:
 
-1. `./.config/commit-reflect.json` (project-local)
+1. `./.commit-reflect/config.json` (project-local)
 2. `~/.commit-reflect/config.json` (user-global)
-3. `/etc/commit-reflect/config.json` (system-wide)
 
 ### Basic Configuration
 
-Create `.config/commit-reflect.json`:
+Create `.commit-reflect/config.json`:
 
 ```json
 {

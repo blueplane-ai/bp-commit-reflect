@@ -13,7 +13,7 @@ This directory contains example configuration files for the Commit Reflection Sy
 
 **Usage:**
 ```bash
-cp examples/minimal-config.json .config/commit-reflect.json
+cp examples/minimal-config.json .commit-reflect/config.json
 ```
 
 ### full-config.json
@@ -41,7 +41,7 @@ cp examples/full-config.json ~/.commit-reflect/config.json
 
 **Usage:**
 ```bash
-cp examples/personal-config.json .config/commit-reflect.json
+cp examples/personal-config.json .commit-reflect/config.json
 ```
 
 ### team-config.json
@@ -64,9 +64,8 @@ cp examples/team-config.json /shared/team/.commit-reflect/config.json
 
 The system searches for configuration files in the following order:
 
-1. `./.config/commit-reflect.json` (project-local)
+1. `./.commit-reflect/config.json` (project-local)
 2. `~/.commit-reflect/config.json` (user-global)
-3. `/etc/commit-reflect/config.json` (system-wide)
 
 ## Customizing Your Configuration
 
@@ -170,7 +169,7 @@ The system searches for configuration files in the following order:
 Validate your configuration:
 
 ```bash
-commit-reflect validate-config .config/commit-reflect.json
+commit-reflect validate-config .commit-reflect/config.json
 ```
 
 ## Schema Reference
