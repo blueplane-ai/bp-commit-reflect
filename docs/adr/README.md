@@ -22,6 +22,7 @@ Each ADR follows this structure:
 - [ADR-002: Model Context Protocol Integration](002-mcp-integration.md)
 - [ADR-003: Multiple Storage Backends](003-multiple-storage-backends.md)
 - [ADR-004: Interactive Sequential Question Flow](004-interactive-question-flow.md)
+- [ADR-005: REPL Mode with Git Hook Integration](005-repl-mode-git-hook-integration.md)
 
 ## Contributing
 

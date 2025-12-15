@@ -1,0 +1,31 @@
+#!/bin/sh
+#
+# post-commit hook for commit-reflect REPL integration
+# Sends commit notification to REPL server (fails silently if not running)
+#
+# Install with: commit-reflect install-hook
+# Or copy this file to .git/hooks/post-commit and make it executable
+#
+
+# Configuration via environment variables
+REPL_PORT="${COMMIT_REFLECT_PORT:-9123}"
+REPL_HOST="${COMMIT_REFLECT_HOST:-127.0.0.1}"
+TIMEOUT=2
+
+# Get commit information
+COMMIT_HASH=$(git rev-parse HEAD)
+PROJECT=$(basename "$(git rev-parse --show-toplevel)")
+BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+
+# Get repo path for cross-repo support
+REPO_PATH="$(git rev-parse --show-toplevel 2>/dev/null)"
+
+# Attempt to notify REPL server
+# Fails silently if server is not running (don't block commit)
+curl -s --max-time "$TIMEOUT" \
+    -X POST "http://${REPL_HOST}:${REPL_PORT}/commit" \
+    -d "hash=${COMMIT_HASH}&project=${PROJECT}&branch=${BRANCH}&repo_path=${REPO_PATH}" \
+    >/dev/null 2>&1 || true
+
+# Always exit successfully to not block the commit
+exit 0
