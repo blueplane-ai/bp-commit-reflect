@@ -1,6 +1,9 @@
 """Terminal display helpers for REPL mode."""
 
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Optional, Tuple, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from shared.types.question import Question, QuestionType
 
 from .queue import CommitQueue, QueuedCommit
 
@@ -80,6 +83,7 @@ class REPLDisplay:
         total_questions: int,
         help_text: Optional[str] = None,
         required: bool = True,
+        question: Optional["Question"] = None,
     ) -> None:
         """Display a reflection question.
 
@@ -89,12 +93,41 @@ class REPLDisplay:
             total_questions: Total number of questions
             help_text: Optional help/hint text
             required: Whether question is required
+            question: Full Question object for type-specific display
         """
+        from shared.types.question import QuestionType
+
         print()
         print(f"[Question {question_number}/{total_questions}]")
         print(question_text)
         if help_text:
             print(f"  ({help_text})")
+
+        # Show type-specific options/hints
+        if question:
+            allow_other = question.metadata and question.metadata.get("allow_other_text", False)
+            if question.question_type == QuestionType.CHOICE and question.options:
+                print("  Options:")
+                for i, option in enumerate(question.options, 1):
+                    if option == "Other" and allow_other:
+                        print(f"    {i}. {option} (or type your own response)")
+                    else:
+                        print(f"    {i}. {option}")
+            elif question.question_type == QuestionType.MULTICHOICE and question.options:
+                hint = "enter numbers separated by commas"
+                if allow_other:
+                    hint += ", or type your own"
+                print(f"  Options ({hint}):")
+                for i, option in enumerate(question.options, 1):
+                    if option == "Other" and allow_other:
+                        print(f"    {i}. {option} (or type your own)")
+                    else:
+                        print(f"    {i}. {option}")
+            elif question.question_type in (QuestionType.SCALE, QuestionType.RATING):
+                print(f"  Range: {question.min_value}-{question.max_value}")
+            elif question.question_type == QuestionType.MULTILINE:
+                print("  (Enter your response, press Enter twice to finish)")
+
         if not required:
             print("  [Optional - press Enter to skip]")
 

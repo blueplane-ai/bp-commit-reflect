@@ -432,6 +432,7 @@ def create_default_question_set() -> QuestionSet:
                 ],
                 help_text="Select all that apply (or skip if no blockers)",
                 order=7,
+                metadata={"allow_other_text": True},
             ),
             Question(
                 id="learning",
@@ -461,10 +462,12 @@ def create_default_question_set() -> QuestionSet:
                     "Partial progress",
                     "Unblocks something else",
                     "Spike",
-                    "Fixed fallout from earlier changes"
+                    "Fixed fallout from earlier changes",
+                    "Other"
                 ],
                 help_text="What did this commit accomplish?",
                 order=10,
+                metadata={"allow_other_text": True},
             ),
         ],
     )

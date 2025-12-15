@@ -265,6 +265,7 @@ class REPLMode:
             total_questions=total,
             help_text=current_question.help_text,
             required=current_question.required,
+            question=current_question,
         )
 
         # Get answer
