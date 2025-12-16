@@ -82,7 +82,7 @@ class TestConcurrentSessions:
         finally:
             await manager.stop()
 
-    def test_concurrent_writes_to_storage(self, mocker):
+    def test_concurrent_writes_to_storage(self):
         """Test concurrent writes to storage backend."""
         mock_storage = Mock()
         mock_storage.write.return_value = True

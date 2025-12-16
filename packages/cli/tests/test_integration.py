@@ -97,12 +97,14 @@ class TestValidationIntegration:
         assert validated == 4
 
         # Invalid answer - out of range
-        with pytest.raises(ValidationError):
-            validate_question_answer(scale_question, "10")
+        validated, error = validate_question_answer(scale_question, "10")
+        assert error is not None
+        assert validated is None
 
         # Invalid answer - not a number
-        with pytest.raises(ValidationError):
-            validate_question_answer(scale_question, "not a number")
+        validated, error = validate_question_answer(scale_question, "not a number")
+        assert error is not None
+        assert validated is None
 
     def test_text_validation_workflow(self, sample_questions):
         """Test text question validation in workflow."""
@@ -114,13 +116,15 @@ class TestValidationIntegration:
         assert validated == "Great experience"
 
         # Empty answer (not allowed for required)
-        with pytest.raises(ValidationError):
-            validate_question_answer(text_question, "")
+        validated, error = validate_question_answer(text_question, "")
+        assert error is not None
+        assert validated is None
 
         # Too long answer
         long_text = "x" * 600
-        with pytest.raises(ValidationError):
-            validate_question_answer(text_question, long_text)
+        validated, error = validate_question_answer(text_question, long_text)
+        assert error is not None
+        assert validated is None
 
     def test_error_recovery_workflow(self, temp_dir):
         """Test error recovery mechanisms."""

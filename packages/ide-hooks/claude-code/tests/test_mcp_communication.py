@@ -7,6 +7,9 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
+# Skip all tests in this module if aiohttp is not installed
+aiohttp = pytest.importorskip("aiohttp")
+
 sys.path.insert(0, str(PathLib(__file__).parent.parent))
 
 from PostToolUse import CommitReflectionHook, ReflectionQuestionFlow
