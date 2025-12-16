@@ -12,7 +12,7 @@ project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from packages.cli.src.progress import ProgressIndicator
-from packages.cli.src.validators import ValidationError, validate_question_answer
+from packages.cli.src.validators import validate_question_answer
 from packages.shared.storage.jsonl import JSONLStorage
 
 
