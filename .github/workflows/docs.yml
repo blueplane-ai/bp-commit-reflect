@@ -24,12 +24,24 @@ jobs:
         python -m pip install --upgrade pip
         pip install -e ".[docs]"
 
+    - name: Check if Sphinx docs exist
+      id: check_docs
+      run: |
+        if [ -f "docs/Makefile" ] || [ -f "docs/conf.py" ]; then
+          echo "has_sphinx=true" >> $GITHUB_OUTPUT
+        else
+          echo "has_sphinx=false" >> $GITHUB_OUTPUT
+          echo "Sphinx documentation not configured yet, skipping build"
+        fi
+
     - name: Build documentation
+      if: steps.check_docs.outputs.has_sphinx == 'true'
       run: |
         cd docs
         make html
 
     - name: Upload docs artifact
+      if: steps.check_docs.outputs.has_sphinx == 'true'
       uses: actions/upload-artifact@v4
       with:
         name: documentation
@@ -44,13 +56,25 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Check if Sphinx docs exist
+      id: check_docs
+      run: |
+        if [ -f "docs/Makefile" ] || [ -f "docs/conf.py" ]; then
+          echo "has_sphinx=true" >> $GITHUB_OUTPUT
+        else
+          echo "has_sphinx=false" >> $GITHUB_OUTPUT
+          echo "Sphinx documentation not configured yet, skipping deploy"
+        fi
+
     - name: Download docs artifact
+      if: steps.check_docs.outputs.has_sphinx == 'true'
       uses: actions/download-artifact@v4
       with:
         name: documentation
         path: docs/_build/html/
 
     - name: Deploy to GitHub Pages
+      if: steps.check_docs.outputs.has_sphinx == 'true'
       uses: peaceiris/actions-gh-pages@v4
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
