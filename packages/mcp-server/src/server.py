@@ -10,11 +10,10 @@ import json
 import logging
 import signal
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Any
 from uuid import UUID
 
 from .session_manager import SessionManager, SessionState
-
 
 logger = logging.getLogger(__name__)
 
@@ -99,8 +98,7 @@ class MCPReflectionServer:
 
         for sig in (signal.SIGTERM, signal.SIGINT):
             loop.add_signal_handler(
-                sig,
-                lambda s=sig: asyncio.create_task(self._handle_shutdown_signal(s))
+                sig, lambda s=sig: asyncio.create_task(self._handle_shutdown_signal(s))
             )
 
     async def _handle_shutdown_signal(self, sig):
@@ -111,12 +109,8 @@ class MCPReflectionServer:
     # MCP Tool Implementations
 
     async def start_reflection(
-        self,
-        commit_hash: str,
-        project_name: Optional[str] = None,
-        branch: Optional[str] = None,
-        **kwargs
-    ) -> Dict[str, Any]:
+        self, commit_hash: str, project_name: str | None = None, branch: str | None = None, **kwargs
+    ) -> dict[str, Any]:
         """
         MCP Tool: Start a new commit reflection session.
 
@@ -134,7 +128,7 @@ class MCPReflectionServer:
             session = await self.session_manager.create_session(
                 commit_hash=commit_hash,
                 project_name=project_name,
-                metadata={"branch": branch, **kwargs}
+                metadata={"branch": branch, **kwargs},
             )
 
             # Spawn CLI process
@@ -145,10 +139,7 @@ class MCPReflectionServer:
             )
 
             session.cli_process = cli_process
-            await self.session_manager.update_session_state(
-                session.session_id,
-                SessionState.ACTIVE
-            )
+            await self.session_manager.update_session_state(session.session_id, SessionState.ACTIVE)
 
             # Get first question from CLI
             first_question = await self._get_next_question(session)
@@ -157,7 +148,7 @@ class MCPReflectionServer:
                 "success": True,
                 "session_id": str(session.session_id),
                 "question": first_question,
-                "message": "Reflection session started"
+                "message": "Reflection session started",
             }
 
         except Exception as e:
@@ -165,15 +156,10 @@ class MCPReflectionServer:
             return {
                 "success": False,
                 "error": str(e),
-                "message": "Failed to start reflection session"
+                "message": "Failed to start reflection session",
             }
 
-    async def answer_question(
-        self,
-        session_id: str,
-        answer: str,
-        **kwargs
-    ) -> Dict[str, Any]:
+    async def answer_question(self, session_id: str, answer: str, **kwargs) -> dict[str, Any]:
         """
         MCP Tool: Answer a reflection question.
 
@@ -193,14 +179,14 @@ class MCPReflectionServer:
                 return {
                     "success": False,
                     "error": "Session not found or expired",
-                    "message": "Invalid session"
+                    "message": "Invalid session",
                 }
 
             if not session.is_active():
                 return {
                     "success": False,
                     "error": f"Session is in {session.state} state",
-                    "message": "Session not active"
+                    "message": "Session not active",
                 }
 
             # Send answer to CLI process
@@ -219,7 +205,7 @@ class MCPReflectionServer:
                 return {
                     "success": True,
                     "completed": True,
-                    "message": "Reflection completed successfully"
+                    "message": "Reflection completed successfully",
                 }
 
             return {
@@ -227,22 +213,14 @@ class MCPReflectionServer:
                 "completed": False,
                 "question": next_question,
                 "question_index": session.current_question_index,
-                "message": "Answer recorded"
+                "message": "Answer recorded",
             }
 
         except Exception as e:
             logger.error(f"Error answering question: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "message": "Failed to record answer"
-            }
+            return {"success": False, "error": str(e), "message": "Failed to record answer"}
 
-    async def complete_reflection(
-        self,
-        session_id: str,
-        **kwargs
-    ) -> Dict[str, Any]:
+    async def complete_reflection(self, session_id: str, **kwargs) -> dict[str, Any]:
         """
         MCP Tool: Complete a reflection session.
 
@@ -261,7 +239,7 @@ class MCPReflectionServer:
                 return {
                     "success": False,
                     "error": "Session not found or expired",
-                    "message": "Invalid session"
+                    "message": "Invalid session",
                 }
 
             # Send completion signal to CLI
@@ -271,25 +249,15 @@ class MCPReflectionServer:
             # Mark session as completed
             await self.session_manager.complete_session(session_uuid)
 
-            return {
-                "success": True,
-                "message": "Reflection completed and saved"
-            }
+            return {"success": True, "message": "Reflection completed and saved"}
 
         except Exception as e:
             logger.error(f"Error completing reflection: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "message": "Failed to complete reflection"
-            }
+            return {"success": False, "error": str(e), "message": "Failed to complete reflection"}
 
     async def cancel_reflection(
-        self,
-        session_id: str,
-        reason: Optional[str] = None,
-        **kwargs
-    ) -> Dict[str, Any]:
+        self, session_id: str, reason: str | None = None, **kwargs
+    ) -> dict[str, Any]:
         """
         MCP Tool: Cancel a reflection session.
 
@@ -309,29 +277,21 @@ class MCPReflectionServer:
                 return {
                     "success": False,
                     "error": "Session not found or already ended",
-                    "message": "Invalid session"
+                    "message": "Invalid session",
                 }
 
             return {
                 "success": True,
-                "message": f"Reflection cancelled{': ' + reason if reason else ''}"
+                "message": f"Reflection cancelled{': ' + reason if reason else ''}",
             }
 
         except Exception as e:
             logger.error(f"Error cancelling reflection: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "message": "Failed to cancel reflection"
-            }
+            return {"success": False, "error": str(e), "message": "Failed to cancel reflection"}
 
     async def get_recent_reflections(
-        self,
-        limit: int = 10,
-        project_name: Optional[str] = None,
-        since: Optional[str] = None,
-        **kwargs
-    ) -> Dict[str, Any]:
+        self, limit: int = 10, project_name: str | None = None, since: str | None = None, **kwargs
+    ) -> dict[str, Any]:
         """
         MCP Tool: Get recent reflections.
 
@@ -346,30 +306,32 @@ class MCPReflectionServer:
         """
         try:
             # Import storage utilities
+            from datetime import datetime
+
             from shared.storage.factory import create_storage_from_config
-            from shared.types.config import StorageConfig, Config
+            from shared.types.config import Config, StorageConfig
             from shared.types.storage import QueryOptions
-            from datetime import datetime, timezone
 
             # Load default configuration or try common paths
             config = Config()
 
             # Try to load config from common locations
             config_paths = [
-                Path('.commit-reflect') / 'config.json',
-                Path.home() / '.commit-reflect' / 'config.json',
+                Path(".commit-reflect") / "config.json",
+                Path.home() / ".commit-reflect" / "config.json",
             ]
 
             for config_path in config_paths:
                 if config_path.exists():
                     try:
                         import json
-                        with open(config_path, 'r') as f:
+
+                        with open(config_path) as f:
                             config_data = json.load(f)
-                            if 'storage' in config_data:
+                            if "storage" in config_data:
                                 config.storage = [
                                     StorageConfig(**s) if isinstance(s, dict) else s
-                                    for s in config_data['storage']
+                                    for s in config_data["storage"]
                                 ]
                             break
                     except Exception as e:
@@ -379,8 +341,8 @@ class MCPReflectionServer:
             if not config.storage:
                 config.storage = [
                     StorageConfig(
-                        backend='jsonl',
-                        path='.commit-reflections.jsonl',
+                        backend="jsonl",
+                        path=".commit-reflections.jsonl",
                         enabled=True,
                     )
                 ]
@@ -406,15 +368,15 @@ class MCPReflectionServer:
                     # Apply filters
                     for reflection in reflections:
                         # Project filter
-                        if project_name and reflection.get('project') != project_name:
+                        if project_name and reflection.get("project") != project_name:
                             continue
 
                         # Time filter
                         if since:
                             try:
-                                since_dt = datetime.fromisoformat(since.replace('Z', '+00:00'))
+                                since_dt = datetime.fromisoformat(since.replace("Z", "+00:00"))
                                 reflection_dt = datetime.fromisoformat(
-                                    reflection.get('timestamp', '').replace('Z', '+00:00')
+                                    reflection.get("timestamp", "").replace("Z", "+00:00")
                                 )
                                 if reflection_dt < since_dt:
                                     continue
@@ -432,17 +394,14 @@ class MCPReflectionServer:
                     errors.append(f"{storage_config.backend}: {str(e)}")
 
             # Sort by timestamp (most recent first) and limit
-            all_reflections.sort(
-                key=lambda r: r.get('timestamp', ''),
-                reverse=True
-            )
+            all_reflections.sort(key=lambda r: r.get("timestamp", ""), reverse=True)
             all_reflections = all_reflections[:limit]
 
             result = {
                 "success": True,
                 "reflections": all_reflections,
                 "count": len(all_reflections),
-                "message": f"Found {len(all_reflections)} reflection(s)"
+                "message": f"Found {len(all_reflections)} reflection(s)",
             }
 
             if errors:
@@ -452,17 +411,9 @@ class MCPReflectionServer:
 
         except Exception as e:
             logger.error(f"Error getting recent reflections: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "message": "Failed to query reflections"
-            }
+            return {"success": False, "error": str(e), "message": "Failed to query reflections"}
 
-    async def get_session_status(
-        self,
-        session_id: str,
-        **kwargs
-    ) -> Dict[str, Any]:
+    async def get_session_status(self, session_id: str, **kwargs) -> dict[str, Any]:
         """
         Get status of a reflection session.
 
@@ -481,24 +432,16 @@ class MCPReflectionServer:
                 return {
                     "success": False,
                     "error": "Session not found",
-                    "message": "Invalid session"
+                    "message": "Invalid session",
                 }
 
-            return {
-                "success": True,
-                "session": session.to_dict(),
-                "message": "Session found"
-            }
+            return {"success": True, "session": session.to_dict(), "message": "Session found"}
 
         except Exception as e:
             logger.error(f"Error getting session status: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "message": "Failed to get session status"
-            }
+            return {"success": False, "error": str(e), "message": "Failed to get session status"}
 
-    async def get_server_stats(self) -> Dict[str, Any]:
+    async def get_server_stats(self) -> dict[str, Any]:
         """
         Get server statistics.
 
@@ -515,24 +458,20 @@ class MCPReflectionServer:
                     "sessions": session_counts,
                     "max_concurrent": self.session_manager.max_concurrent_sessions,
                 },
-                "message": "Server stats retrieved"
+                "message": "Server stats retrieved",
             }
 
         except Exception as e:
             logger.error(f"Error getting server stats: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "message": "Failed to get server stats"
-            }
+            return {"success": False, "error": str(e), "message": "Failed to get server stats"}
 
     # CLI Process Management
 
     async def _spawn_cli_process(
         self,
         commit_hash: str,
-        project_name: Optional[str] = None,
-        branch: Optional[str] = None,
+        project_name: str | None = None,
+        branch: str | None = None,
     ) -> asyncio.subprocess.Process:
         """
         Spawn a CLI process for reflection.
@@ -582,7 +521,7 @@ class MCPReflectionServer:
         session.cli_process.stdin.write(message.encode())
         await session.cli_process.stdin.drain()
 
-    async def _get_next_question(self, session) -> Optional[Dict[str, Any]]:
+    async def _get_next_question(self, session) -> dict[str, Any] | None:
         """
         Get the next question from CLI process.
 
@@ -597,10 +536,7 @@ class MCPReflectionServer:
 
         try:
             # Read next line from CLI stdout
-            line = await asyncio.wait_for(
-                session.cli_process.stdout.readline(),
-                timeout=5.0
-            )
+            line = await asyncio.wait_for(session.cli_process.stdout.readline(), timeout=5.0)
 
             if not line:
                 return None

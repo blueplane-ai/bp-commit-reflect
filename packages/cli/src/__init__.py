@@ -1,23 +1,23 @@
 """CLI implementation for commit reflection system."""
 
-from .validators import (
-    ValidationError,
-    validate_scale,
-    validate_text,
-    validate_question_answer,
-)
 from .errors import (
-    SessionError,
-    StorageError,
     ConfigurationError,
     RecoveryManager,
+    SessionError,
+    StorageError,
+)
+from .git_utils import (
+    GitError,
+    get_commit_context,
+    get_current_branch,
 )
 from .progress import ProgressIndicator
 from .session import ReflectionSession, SessionState
-from .git_utils import (
-    get_commit_context,
-    get_current_branch,
-    GitError,
+from .validators import (
+    ValidationError,
+    validate_question_answer,
+    validate_scale,
+    validate_text,
 )
 
 __all__ = [

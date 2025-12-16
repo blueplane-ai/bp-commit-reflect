@@ -1,8 +1,8 @@
 """Base storage backend interface."""
 
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 
 class StorageBackend(ABC):
@@ -23,10 +23,7 @@ class StorageBackend(ABC):
 
     @abstractmethod
     def read_recent(
-        self,
-        limit: int = 10,
-        project: Optional[str] = None,
-        since: Optional[datetime] = None
+        self, limit: int = 10, project: Optional[str] = None, since: Optional[datetime] = None
     ) -> List[Dict[str, Any]]:
         """
         Read recent reflections from storage.

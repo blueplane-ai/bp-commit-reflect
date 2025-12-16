@@ -4,12 +4,12 @@ This package provides a persistent terminal interface that listens for
 git commits via HTTP notifications and prompts users for reflections.
 """
 
-from .state_machine import REPLState, StateMachine, StateContext
-from .queue import QueuedCommit, CommitQueue
-from .server import CommitNotificationServer
-from .input_handler import AsyncInputHandler
 from .display import REPLDisplay
+from .input_handler import AsyncInputHandler
+from .queue import CommitQueue, QueuedCommit
 from .repl_session import REPLMode, run_repl_mode
+from .server import CommitNotificationServer
+from .state_machine import REPLState, StateContext, StateMachine
 
 __all__ = [
     # State machine

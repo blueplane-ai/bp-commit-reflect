@@ -1,24 +1,22 @@
 """Input validation for reflection questions and answers."""
 
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any
+
 from shared.types.question import Question, QuestionType
 
 
 class ValidationError(Exception):
     """Raised when input validation fails."""
 
-    def __init__(self, message: str, help_text: Optional[str] = None):
+    def __init__(self, message: str, help_text: str | None = None):
         super().__init__(message)
         self.message = message
         self.help_text = help_text
 
 
 def validate_scale(
-    value: Any,
-    min_value: int = 1,
-    max_value: int = 5,
-    question_id: Optional[str] = None
-) -> Tuple[int, Optional[str]]:
+    value: Any, min_value: int = 1, max_value: int = 5, question_id: str | None = None
+) -> tuple[int, str | None]:
     """
     Validate scale (numeric) input.
 
@@ -48,11 +46,11 @@ def validate_scale(
 
 def validate_text(
     value: Any,
-    max_length: Optional[int] = None,
-    min_length: Optional[int] = None,
+    max_length: int | None = None,
+    min_length: int | None = None,
     allow_empty: bool = False,
-    question_id: Optional[str] = None
-) -> Tuple[str, Optional[str]]:
+    question_id: str | None = None,
+) -> tuple[str, str | None]:
     """
     Validate text input.
 
@@ -89,11 +87,8 @@ def validate_text(
 
 
 def validate_choice(
-    value: Any,
-    options: list,
-    question_id: Optional[str] = None,
-    allow_other_text: bool = False
-) -> Tuple[str, Optional[str]]:
+    value: Any, options: list, question_id: str | None = None, allow_other_text: bool = False
+) -> tuple[str, str | None]:
     """
     Validate choice (single selection) input.
 
@@ -141,11 +136,8 @@ def validate_choice(
 
 
 def validate_multichoice(
-    value: Any,
-    options: list,
-    question_id: Optional[str] = None,
-    allow_other_text: bool = False
-) -> Tuple[list, Optional[str]]:
+    value: Any, options: list, question_id: str | None = None, allow_other_text: bool = False
+) -> tuple[list, str | None]:
     """
     Validate multichoice (multiple selection) input.
 
@@ -209,15 +201,17 @@ def validate_multichoice(
                 if other_value not in selected:
                     selected.append(other_value)
             else:
-                return None, f"Invalid option: '{part}'. Enter 1-{len(options)} or option names, comma-separated"
+                return (
+                    None,
+                    f"Invalid option: '{part}'. Enter 1-{len(options)} or option names, comma-separated",
+                )
 
     return selected, None
 
 
 def validate_question_answer(
-    question: Union[Question, Dict[str, Any]],
-    answer: Any
-) -> Tuple[Any, Optional[str]]:
+    question: Question | dict[str, Any], answer: Any
+) -> tuple[Any, str | None]:
     """
     Validate an answer based on question configuration.
 
@@ -233,7 +227,11 @@ def validate_question_answer(
     """
     # Handle both Question objects and dictionaries
     if isinstance(question, Question):
-        question_type = question.question_type.value if isinstance(question.question_type, QuestionType) else question.question_type
+        question_type = (
+            question.question_type.value
+            if isinstance(question.question_type, QuestionType)
+            else question.question_type
+        )
         question_id = question.id
         optional = not question.required
         min_val = question.min_value if question.min_value is not None else 1
@@ -273,7 +271,7 @@ def validate_question_answer(
             max_length=max_length,
             min_length=min_length,
             allow_empty=optional,
-            question_id=question_id
+            question_id=question_id,
         )
 
     elif question_type == "choice":
@@ -287,7 +285,7 @@ def validate_question_answer(
         return answer, None
 
 
-def validate_config(config: Dict[str, Any]) -> Tuple[Dict[str, Any], list]:
+def validate_config(config: dict[str, Any]) -> tuple[dict[str, Any], list]:
     """
     Validate configuration dictionary.
 
@@ -322,7 +320,15 @@ def validate_config(config: Dict[str, Any]) -> Tuple[Dict[str, Any], list]:
         warnings.append("No questions defined - using defaults")
 
     # Ensure required questions are present (v2.0 question set)
-    required_ids = ["work_type", "difficulty", "ai_effectiveness", "who_drove", "confidence", "experience", "outcome"]
+    required_ids = [
+        "work_type",
+        "difficulty",
+        "ai_effectiveness",
+        "who_drove",
+        "confidence",
+        "experience",
+        "outcome",
+    ]
     question_ids = [q.get("id") for q in questions]
 
     for req_id in required_ids:

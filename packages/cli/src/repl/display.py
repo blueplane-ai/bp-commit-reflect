@@ -1,9 +1,9 @@
 """Terminal display helpers for REPL mode."""
 
-from typing import Dict, Any, List, Optional, Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Optional
 
 if TYPE_CHECKING:
-    from shared.types.question import Question, QuestionType
+    from shared.types.question import Question
 
 from .queue import CommitQueue, QueuedCommit
 
@@ -81,7 +81,7 @@ class REPLDisplay:
         question_text: str,
         question_number: int,
         total_questions: int,
-        help_text: Optional[str] = None,
+        help_text: str | None = None,
         required: bool = True,
         question: Optional["Question"] = None,
     ) -> None:
@@ -131,7 +131,7 @@ class REPLDisplay:
         if not required:
             print("  [Optional - press Enter to skip]")
 
-    def show_validation_error(self, error: Optional[str]) -> None:
+    def show_validation_error(self, error: str | None) -> None:
         """Display validation error for invalid answer.
 
         Args:
@@ -142,8 +142,8 @@ class REPLDisplay:
 
     def show_summary(
         self,
-        answers: Dict[str, Any],
-        questions: List[Dict[str, Any]],
+        answers: dict[str, Any],
+        questions: list[dict[str, Any]],
     ) -> None:
         """Display reflection summary before saving.
 

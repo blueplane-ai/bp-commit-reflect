@@ -7,10 +7,9 @@ Tests configuration loading, validation, and defaults.
 import pytest
 from shared.types.config import (
     Config,
-    StorageConfig,
-    StorageBackendType,
     SessionConfig,
-    MCPConfig,
+    StorageBackendType,
+    StorageConfig,
 )
 
 
@@ -49,8 +48,6 @@ class TestStorageBackendConfig:
         # Should have a default path set in __post_init__
         assert config.path is not None
         assert config.path == ".commit-reflections.jsonl"
-
-
 
 
 class TestSessionConfig:
@@ -105,7 +102,9 @@ class TestConfig:
 
     def test_config_questions_optional(self):
         """Test that questions field is optional."""
-        config = Config.from_dict({"storage_backends": [{"backend_type": "jsonl", "path": "test.jsonl"}]})
+        config = Config.from_dict(
+            {"storage_backends": [{"backend_type": "jsonl", "path": "test.jsonl"}]}
+        )
         # Questions can be None
         assert config.questions is None or config.questions is not None
 
@@ -132,12 +131,8 @@ class TestConfig:
     def test_config_defaults_applied(self):
         """Test that default values are applied when not specified."""
         minimal = {
-            "storage_backends": [
-                {"backend_type": "jsonl", "path": "reflections.jsonl"}
-            ],
-            "questions": [
-                {"id": "what", "text": "What changed?", "type": "text"}
-            ],
+            "storage_backends": [{"backend_type": "jsonl", "path": "reflections.jsonl"}],
+            "questions": [{"id": "what", "text": "What changed?", "type": "text"}],
         }
         config = Config.from_dict(minimal)
         assert config.session.timeout is None  # Default

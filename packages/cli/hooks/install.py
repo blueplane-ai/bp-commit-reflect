@@ -4,11 +4,9 @@ Installs hooks locally in a repository's .git/hooks/ directory.
 Does NOT use global git hooks.
 """
 
-import os
 import shutil
 import stat
 from pathlib import Path
-from typing import Optional
 
 
 def get_package_root() -> Path:
@@ -23,7 +21,7 @@ def get_hook_template_path() -> Path:
     return get_package_root() / ".git-tools" / "hooks" / "post-commit"
 
 
-def get_hooks_dir(repo_path: Optional[Path] = None) -> Optional[Path]:
+def get_hooks_dir(repo_path: Path | None = None) -> Path | None:
     """
     Get the .git/hooks directory for a repository.
 
@@ -73,7 +71,7 @@ def is_our_hook(hook_path: Path) -> bool:
 
 
 def install_hook(
-    repo_path: Optional[Path] = None,
+    repo_path: Path | None = None,
     force: bool = False,
     port: int = 9123,
 ) -> bool:
@@ -135,8 +133,7 @@ def install_hook(
         # Replace default port if different from 9123
         if port != 9123:
             hook_content = hook_content.replace(
-                'COMMIT_REFLECT_PORT:-9123',
-                f'COMMIT_REFLECT_PORT:-{port}'
+                "COMMIT_REFLECT_PORT:-9123", f"COMMIT_REFLECT_PORT:-{port}"
             )
     else:
         # Fallback: generate inline if template not found
@@ -147,10 +144,7 @@ def install_hook(
     hook_path.write_text(hook_content)
 
     # Make executable (rwxr-xr-x)
-    hook_path.chmod(
-        hook_path.stat().st_mode |
-        stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
-    )
+    hook_path.chmod(hook_path.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
     print(f"Installed post-commit hook at {hook_path}")
     print(f"Hook will notify REPL server on port {port}")
@@ -171,7 +165,7 @@ def generate_hook_script(port: int = 9123) -> str:
     Returns:
         Hook script content
     """
-    return f'''#!/bin/sh
+    return f"""#!/bin/sh
 #
 # post-commit hook for commit-reflect REPL integration
 # Sends commit notification to REPL server (fails silently if not running)
@@ -202,10 +196,10 @@ curl -s --max-time "$TIMEOUT" \\
     >/dev/null 2>&1 || true
 
 exit 0
-'''
+"""
 
 
-def uninstall_hook(repo_path: Optional[Path] = None) -> bool:
+def uninstall_hook(repo_path: Path | None = None) -> bool:
     """
     Remove the post-commit hook from a git repository.
 
@@ -254,7 +248,7 @@ def uninstall_hook(repo_path: Optional[Path] = None) -> bool:
     return True
 
 
-def is_hook_installed(repo_path: Optional[Path] = None) -> bool:
+def is_hook_installed(repo_path: Path | None = None) -> bool:
     """
     Check if our hook is installed in a repository.
 
@@ -277,7 +271,7 @@ def is_hook_installed(repo_path: Optional[Path] = None) -> bool:
     return is_our_hook(hook_path)
 
 
-def get_hook_port(repo_path: Optional[Path] = None) -> Optional[int]:
+def get_hook_port(repo_path: Path | None = None) -> int | None:
     """
     Get the configured port from an installed hook.
 
@@ -304,7 +298,8 @@ def get_hook_port(repo_path: Optional[Path] = None) -> Optional[int]:
         content = hook_path.read_text()
         # Look for default port in COMMIT_REFLECT_PORT:-XXXX pattern
         import re
-        match = re.search(r'COMMIT_REFLECT_PORT:-(\d+)', content)
+
+        match = re.search(r"COMMIT_REFLECT_PORT:-(\d+)", content)
         if match:
             return int(match.group(1))
     except Exception:
@@ -326,7 +321,7 @@ if __name__ == "__main__":
         "--repo",
         type=Path,
         default=None,
-        help="Path to git repository (defaults to current directory)"
+        help="Path to git repository (defaults to current directory)",
     )
 
     subparsers = parser.add_subparsers(dest="command", required=True)

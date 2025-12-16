@@ -1,12 +1,12 @@
 """JSONL storage backend implementation."""
 
+import fcntl
 import json
 import os
-import fcntl
-from pathlib import Path
-from typing import List, Dict, Any, Optional
-from datetime import datetime
 from contextlib import contextmanager
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from .base import StorageBackend
 
@@ -77,7 +77,7 @@ class JSONLStorage(StorageBackend):
             # Read existing content with shared lock
             existing_lines = []
             if self.filepath.exists() and self.filepath.stat().st_size > 0:
-                with open(self.filepath, "r", encoding="utf-8") as f:
+                with open(self.filepath, encoding="utf-8") as f:
                     with self._lock_file(f, fcntl.LOCK_SH):
                         existing_lines = f.readlines()
 
@@ -110,10 +110,7 @@ class JSONLStorage(StorageBackend):
             return False
 
     def read_recent(
-        self,
-        limit: int = 10,
-        project: Optional[str] = None,
-        since: Optional[datetime] = None
+        self, limit: int = 10, project: Optional[str] = None, since: Optional[datetime] = None
     ) -> List[Dict[str, Any]]:
         """
         Read recent reflections from the JSONL file.
@@ -132,7 +129,7 @@ class JSONLStorage(StorageBackend):
         reflections = []
 
         try:
-            with open(self.filepath, "r", encoding="utf-8") as f:
+            with open(self.filepath, encoding="utf-8") as f:
                 with self._lock_file(f, fcntl.LOCK_SH):
                     for line in f:
                         line = line.strip()
@@ -178,7 +175,7 @@ class JSONLStorage(StorageBackend):
         Returns:
             List of all reflection dictionaries
         """
-        return self.read_recent(limit=float('inf'))
+        return self.read_recent(limit=float("inf"))
 
     def close(self) -> None:
         """Close the storage backend (no-op for JSONL)."""

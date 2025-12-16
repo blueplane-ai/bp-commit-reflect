@@ -1,10 +1,9 @@
 """Main CLI entry point with mode selection."""
 
-import sys
-import asyncio
 import argparse
+import asyncio
+import sys
 from pathlib import Path
-from typing import Optional
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -16,7 +15,7 @@ def create_parser() -> argparse.ArgumentParser:
     """
     parser = argparse.ArgumentParser(
         prog="commit-reflect",
-        description="Capture reflections and AI synergy assessments at commit time"
+        description="Capture reflections and AI synergy assessments at commit time",
     )
 
     # Create subparsers for commands
@@ -24,37 +23,30 @@ def create_parser() -> argparse.ArgumentParser:
 
     # Install hook subcommand
     install_parser = subparsers.add_parser(
-        "install-hook",
-        help="Install git post-commit hook locally in a repository"
+        "install-hook", help="Install git post-commit hook locally in a repository"
     )
     install_parser.add_argument(
         "--repo",
         type=Path,
         default=None,
-        help="Path to git repository (defaults to current directory)"
+        help="Path to git repository (defaults to current directory)",
     )
     install_parser.add_argument(
-        "--force",
-        action="store_true",
-        help="Overwrite existing hook if present"
+        "--force", action="store_true", help="Overwrite existing hook if present"
     )
     install_parser.add_argument(
-        "--port",
-        type=int,
-        default=9123,
-        help="Port for REPL server (default: 9123)"
+        "--port", type=int, default=9123, help="Port for REPL server (default: 9123)"
     )
 
     # Uninstall hook subcommand
     uninstall_parser = subparsers.add_parser(
-        "uninstall-hook",
-        help="Remove git post-commit hook from a repository"
+        "uninstall-hook", help="Remove git post-commit hook from a repository"
     )
     uninstall_parser.add_argument(
         "--repo",
         type=Path,
         default=None,
-        help="Path to git repository (defaults to current directory)"
+        help="Path to git repository (defaults to current directory)",
     )
 
     # Main arguments (for non-subcommand usage)
@@ -63,69 +55,39 @@ def create_parser() -> argparse.ArgumentParser:
         "--mode",
         choices=["cli", "mcp-session", "repl"],
         default="cli",
-        help="Execution mode: 'cli' for interactive terminal, 'mcp-session' for MCP protocol, 'repl' for persistent listener"
+        help="Execution mode: 'cli' for interactive terminal, 'mcp-session' for MCP protocol, 'repl' for persistent listener",
     )
 
     # Project and commit info
-    parser.add_argument(
-        "--project",
-        help="Project name (auto-detected if not provided)"
-    )
+    parser.add_argument("--project", help="Project name (auto-detected if not provided)")
 
-    parser.add_argument(
-        "--branch",
-        help="Git branch name"
-    )
+    parser.add_argument("--branch", help="Git branch name")
 
-    parser.add_argument(
-        "--commit",
-        help="Commit hash (single commit mode)"
-    )
+    parser.add_argument("--commit", help="Commit hash (single commit mode)")
 
-    parser.add_argument(
-        "--commits",
-        help="Comma-separated commit hashes (batch mode)"
-    )
+    parser.add_argument("--commits", help="Comma-separated commit hashes (batch mode)")
 
     # Configuration
-    parser.add_argument(
-        "--config",
-        help="Path to configuration file"
-    )
+    parser.add_argument("--config", help="Path to configuration file")
 
     parser.add_argument(
-        "--storage",
-        help="Storage backends to use (comma-separated: jsonl,database,git)"
+        "--storage", help="Storage backends to use (comma-separated: jsonl,database,git)"
     )
 
-    parser.add_argument(
-        "--jsonl-path",
-        help="Path to JSONL storage file"
-    )
+    parser.add_argument("--jsonl-path", help="Path to JSONL storage file")
 
-    parser.add_argument(
-        "--db-path",
-        help="Path to SQLite database"
-    )
+    parser.add_argument("--db-path", help="Path to SQLite database")
 
     # REPL mode specific
     parser.add_argument(
-        "--port",
-        type=int,
-        default=9123,
-        help="Port for REPL HTTP server (default: 9123)"
+        "--port", type=int, default=9123, help="Port for REPL HTTP server (default: 9123)"
     )
 
     # Session management
-    parser.add_argument(
-        "--session-id",
-        help="Session ID for MCP mode"
-    )
+    parser.add_argument("--session-id", help="Session ID for MCP mode")
 
     parser.add_argument(
-        "--recover",
-        action="store_true",
-        help="Attempt to recover incomplete session"
+        "--recover", action="store_true", help="Attempt to recover incomplete session"
     )
 
     return parser
@@ -140,13 +102,14 @@ def get_project_name() -> str:
     """
     try:
         from .git_utils import get_repository_root
+
         repo_root = get_repository_root()
         return repo_root.name
     except Exception:
         return Path.cwd().name
 
 
-def main(argv: Optional[list] = None) -> int:
+def main(argv: list | None = None) -> int:
     """
     Main entry point for commit-reflect CLI.
 
@@ -170,6 +133,7 @@ def main(argv: Optional[list] = None) -> int:
         return handle_repl_mode(args)
     elif args.mode == "mcp-session":
         from .mcp_mode import run_mcp_mode
+
         return run_mcp_mode()
     else:
         # Interactive CLI mode - requires project
@@ -177,6 +141,7 @@ def main(argv: Optional[list] = None) -> int:
             args.project = get_project_name()
 
         from .cli_mode import run_interactive_mode
+
         return run_interactive_mode(args)
 
 
@@ -196,12 +161,14 @@ def handle_repl_mode(args: argparse.Namespace) -> int:
     from .repl import run_repl_mode
 
     # Run the async REPL
-    return asyncio.run(run_repl_mode(
-        project=project,
-        port=args.port,
-        config=None,  # TODO: Load from args.config if provided
-        working_dir=Path.cwd(),
-    ))
+    return asyncio.run(
+        run_repl_mode(
+            project=project,
+            port=args.port,
+            config=None,  # TODO: Load from args.config if provided
+            working_dir=Path.cwd(),
+        )
+    )
 
 
 def handle_install_hook(args: argparse.Namespace) -> int:
@@ -220,6 +187,7 @@ def handle_install_hook(args: argparse.Namespace) -> int:
     try:
         # Import hook installer
         from cli.hooks.install import install_hook
+
         success = install_hook(
             repo_path=repo_path,
             force=args.force,
@@ -246,6 +214,7 @@ def handle_uninstall_hook(args: argparse.Namespace) -> int:
 
     try:
         from cli.hooks.install import uninstall_hook
+
         success = uninstall_hook(repo_path=repo_path)
         return 0 if success else 1
     except ImportError:
@@ -269,7 +238,7 @@ def install_hook_inline(repo_path: Path, force: bool = False, port: int = 9123) 
 
     print(f"Installing hook in repository: {repo_path}")
 
-    hook_script = f'''#!/bin/sh
+    hook_script = f"""#!/bin/sh
 #
 # post-commit hook for commit-reflect REPL integration
 # Sends commit notification to REPL server (fails silently if not running)
@@ -300,7 +269,7 @@ curl -s --max-time "$TIMEOUT" \\
 
 # Always exit successfully (don't block commit)
 exit 0
-'''
+"""
 
     # Find .git/hooks directory
     hooks_dir = repo_path / ".git" / "hooks"

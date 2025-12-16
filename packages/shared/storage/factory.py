@@ -7,9 +7,10 @@ writes across multiple backends.
 """
 
 from typing import Dict, List, Optional, Type
+
 from shared.storage.base import StorageBackend
-from shared.types.storage import StorageError
 from shared.types.config import StorageConfig
+from shared.types.storage import StorageError
 
 
 class StorageFactory:
@@ -24,9 +25,7 @@ class StorageFactory:
         """Initialize the storage factory with empty backend registry."""
         self._backends: Dict[str, Type[StorageBackend]] = {}
 
-    def register_backend(
-        self, backend_type: str, backend_class: Type[StorageBackend]
-    ) -> None:
+    def register_backend(self, backend_type: str, backend_class: Type[StorageBackend]) -> None:
         """
         Register a storage backend type.
 
@@ -38,9 +37,7 @@ class StorageFactory:
             StorageError: If backend type already registered
         """
         if backend_type in self._backends:
-            raise StorageError(
-                f"Backend type '{backend_type}' is already registered"
-            )
+            raise StorageError(f"Backend type '{backend_type}' is already registered")
 
         if not issubclass(backend_class, StorageBackend):
             raise StorageError(
@@ -62,7 +59,11 @@ class StorageFactory:
         Raises:
             StorageError: If backend type not registered or creation fails
         """
-        backend_type = config.backend_type.value if hasattr(config.backend_type, 'value') else config.backend_type
+        backend_type = (
+            config.backend_type.value
+            if hasattr(config.backend_type, "value")
+            else config.backend_type
+        )
 
         if backend_type not in self._backends:
             raise StorageError(
@@ -79,20 +80,17 @@ class StorageFactory:
                 backend = backend_class(config.path)
             except TypeError:
                 # Backend expects a config dict, not just a path
-                config_dict = config.to_dict() if hasattr(config, 'to_dict') else {
-                    'path': config.path,
-                    'backend_type': backend_type
-                }
+                config_dict = (
+                    config.to_dict()
+                    if hasattr(config, "to_dict")
+                    else {"path": config.path, "backend_type": backend_type}
+                )
                 backend = backend_class(config_dict)
             return backend
         except Exception as e:
-            raise StorageError(
-                f"Failed to create backend '{backend_type}': {str(e)}"
-            ) from e
+            raise StorageError(f"Failed to create backend '{backend_type}': {str(e)}") from e
 
-    def create_backends(
-        self, storage_config: StorageConfig
-    ) -> List[StorageBackend]:
+    def create_backends(self, storage_config: StorageConfig) -> List[StorageBackend]:
         """
         Create multiple backend instances from storage configuration.
 
@@ -211,13 +209,8 @@ class MultiBackendCoordinator:
 
         # If all failed, raise error
         if not any(result for _, result in results):
-            error_details = [
-                f"{backend.get_type()}: {str(error)}"
-                for backend, error in errors
-            ]
-            raise StorageError(
-                f"All storage backends failed: {'; '.join(error_details)}"
-            )
+            error_details = [f"{backend.get_type()}: {str(error)}" for backend, error in errors]
+            raise StorageError(f"All storage backends failed: {'; '.join(error_details)}")
 
         return primary_success
 
@@ -336,6 +329,7 @@ class MultiBackendCoordinator:
 # Global factory instance
 _default_factory = StorageFactory()
 
+
 # Auto-register built-in backends
 def _register_builtin_backends() -> None:
     """Register built-in storage backends with the default factory."""
@@ -344,6 +338,7 @@ def _register_builtin_backends() -> None:
 
     _default_factory.register_backend("jsonl", JSONLStorage)
     _default_factory.register_backend("sqlite", SQLiteStorage)
+
 
 # Register backends on module import
 _register_builtin_backends()
@@ -359,9 +354,7 @@ def get_default_factory() -> StorageFactory:
     return _default_factory
 
 
-def register_backend(
-    backend_type: str, backend_class: Type[StorageBackend]
-) -> None:
+def register_backend(backend_type: str, backend_class: Type[StorageBackend]) -> None:
     """
     Register a backend with the default factory.
 

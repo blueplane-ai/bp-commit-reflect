@@ -6,9 +6,8 @@ collecting their answers in an interactive terminal session.
 """
 
 import sys
-from typing import Optional, Any
+
 from shared.types.question import Question, QuestionType
-from cli.src.progress import ProgressIndicator
 
 
 def format_question_prompt(question: Question, progress: tuple[int, int]) -> str:
@@ -137,10 +136,10 @@ def collect_boolean_answer(question: Question) -> str:
     answer = input(prompt).strip().lower()
 
     # Normalize common inputs
-    if answer in ['y', 'yes', 'true', '1']:
-        return 'yes'
-    elif answer in ['n', 'no', 'false', '0']:
-        return 'no'
+    if answer in ["y", "yes", "true", "1"]:
+        return "yes"
+    elif answer in ["n", "no", "false", "0"]:
+        return "no"
 
     return answer
 
@@ -179,7 +178,7 @@ def collect_choice_answer(question: Question) -> str:
         print(f"  Invalid choice. Please select from: {', '.join(options)}")
 
 
-def prompt_for_answer(question: Question, progress: tuple[int, int]) -> Optional[str]:
+def prompt_for_answer(question: Question, progress: tuple[int, int]) -> str | None:
     """
     Display a question and collect the answer.
 
@@ -258,9 +257,9 @@ def confirm_submission() -> bool:
 
     while True:
         response = input("\nSubmit reflection? (yes/no): ").strip().lower()
-        if response in ['y', 'yes']:
+        if response in ["y", "yes"]:
             return True
-        elif response in ['n', 'no']:
+        elif response in ["n", "no"]:
             return False
         else:
             print("Please enter 'yes' or 'no'")

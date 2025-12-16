@@ -8,14 +8,13 @@ Tests the Model Context Protocol server's ability to:
 - Manage session state
 """
 
-import pytest
-import json
 import asyncio
+import json
 import sys
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock, AsyncMock
-from datetime import datetime
-from uuid import uuid4
+from unittest.mock import AsyncMock, patch
+
+import pytest
 
 # Add packages to path for imports
 project_root = Path(__file__).parent.parent.parent.parent
@@ -49,25 +48,25 @@ class TestMCPCLICommunication:
         """Test that MCP server can spawn CLI process."""
         # Test subprocess spawning capability
         # We'll test the actual spawning in a simpler way
-        import subprocess
-        
+
         # Mock subprocess for testing
-        with patch('asyncio.create_subprocess_exec') as mock_create:
+        with patch("asyncio.create_subprocess_exec") as mock_create:
             mock_process = AsyncMock()
             mock_process.stdin = AsyncMock()
             mock_process.stdout = AsyncMock()
             mock_process.stderr = AsyncMock()
             mock_process.wait = AsyncMock(return_value=0)
             mock_create.return_value = mock_process
-            
+
             # Simulate spawning a process
             process = await asyncio.create_subprocess_exec(
-                "python", "--version",
+                "python",
+                "--version",
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
-            
+
             assert process is not None
             if process:
                 await process.wait()
@@ -80,12 +79,12 @@ class TestMCPCLICommunication:
         mock_stdin.write = AsyncMock()
         mock_stdin.drain = AsyncMock()
         mock_process.stdin = mock_stdin
-        
+
         # Simulate sending a message
         message = json.dumps({"answer": "Test answer"}) + "\n"
         await mock_stdin.write(message.encode())
         await mock_stdin.drain()
-        
+
         # Verify message was written
         assert mock_stdin.write.called
         call_args = mock_stdin.write.call_args[0][0]
@@ -97,7 +96,7 @@ class TestMCPCLICommunication:
         # Test JSON message receiving capability
         mock_process = AsyncMock()
         mock_stdout = AsyncMock()
-        
+
         # Mock CLI response
         response = {
             "type": "state",
@@ -105,18 +104,16 @@ class TestMCPCLICommunication:
                 "status": "active",
                 "question": "What changed?",
                 "question_id": "what",
-            }
+            },
         }
-        
-        mock_stdout.readline = AsyncMock(
-            return_value=(json.dumps(response) + "\n").encode()
-        )
+
+        mock_stdout.readline = AsyncMock(return_value=(json.dumps(response) + "\n").encode())
         mock_process.stdout = mock_stdout
-        
+
         # Simulate reading response
         line = await mock_stdout.readline()
         response_data = json.loads(line.decode())
-        
+
         assert response_data is not None
         assert "type" in response_data
         assert response_data["type"] == "state"
@@ -126,25 +123,20 @@ class TestMCPCLICommunication:
         # Test error response handling
         mock_process = AsyncMock()
         mock_stdout = AsyncMock()
-        
+
         # Mock CLI error response
         error_response = {
             "type": "error",
-            "data": {
-                "error": "Invalid commit hash",
-                "code": "INVALID_COMMIT"
-            }
+            "data": {"error": "Invalid commit hash", "code": "INVALID_COMMIT"},
         }
-        
-        mock_stdout.readline = AsyncMock(
-            return_value=(json.dumps(error_response) + "\n").encode()
-        )
+
+        mock_stdout.readline = AsyncMock(return_value=(json.dumps(error_response) + "\n").encode())
         mock_process.stdout = mock_stdout
-        
+
         # Simulate reading error response
         line = await mock_stdout.readline()
         response_data = json.loads(line.decode())
-        
+
         # Verify error is detected
         assert "type" in response_data
         assert response_data["type"] == "error"
@@ -155,19 +147,14 @@ class TestMCPCLICommunication:
         # Test timeout handling
         mock_process = AsyncMock()
         mock_stdout = AsyncMock()
-        
+
         # Simulate timeout
-        mock_stdout.readline = AsyncMock(
-            side_effect=asyncio.TimeoutError("Read timeout")
-        )
+        mock_stdout.readline = AsyncMock(side_effect=asyncio.TimeoutError("Read timeout"))
         mock_process.stdout = mock_stdout
-        
+
         # Simulate timeout handling
         try:
-            line = await asyncio.wait_for(
-                mock_stdout.readline(),
-                timeout=0.1
-            )
+            line = await asyncio.wait_for(mock_stdout.readline(), timeout=0.1)
             assert False, "Should have raised TimeoutError"
         except asyncio.TimeoutError:
             # Expected behavior
@@ -181,14 +168,14 @@ class TestMCPCLICommunication:
         mock_stdin.write = AsyncMock()
         mock_stdin.drain = AsyncMock()
         mock_process.stdin = mock_stdin
-        
+
         # Send multiple messages
         answers = ["Answer 1", "Answer 2", "Answer 3"]
         for answer in answers:
             message = json.dumps({"answer": answer}) + "\n"
             await mock_stdin.write(message.encode())
             await mock_stdin.drain()
-        
+
         # Verify all messages were sent
         assert mock_stdin.write.call_count == len(answers)
 
@@ -203,20 +190,16 @@ class TestMCPSessionState:
         """Test that MCP server maintains session state across messages."""
         manager = SessionManager()
         await manager.start()
-        
+
         try:
             # Create a session
             session = await manager.create_session(
-                commit_hash="abc123",
-                project_name="test-project"
+                commit_hash="abc123", project_name="test-project"
             )
-            
+
             # Update session state
-            await manager.update_session_state(
-                session.session_id,
-                SessionState.ACTIVE
-            )
-            
+            await manager.update_session_state(session.session_id, SessionState.ACTIVE)
+
             # Verify session state is maintained
             retrieved = await manager.get_session(session.session_id)
             assert retrieved is not None
@@ -229,18 +212,16 @@ class TestMCPSessionState:
         """Test session cleanup when reflection completes."""
         manager = SessionManager()
         await manager.start()
-        
+
         try:
             # Create a session
-            session = await manager.create_session(
-                commit_hash="abc123"
-            )
+            session = await manager.create_session(commit_hash="abc123")
             session_id = session.session_id
-            
+
             # Complete session
             success = await manager.complete_session(session_id)
             assert success is True
-            
+
             # Verify session is marked as completed
             retrieved = await manager.get_session(session_id)
             assert retrieved is not None
@@ -252,18 +233,16 @@ class TestMCPSessionState:
         """Test session cleanup when reflection is cancelled."""
         manager = SessionManager()
         await manager.start()
-        
+
         try:
             # Create a session
-            session = await manager.create_session(
-                commit_hash="abc123"
-            )
+            session = await manager.create_session(commit_hash="abc123")
             session_id = session.session_id
-            
+
             # Cancel session
             success = await manager.cancel_session(session_id)
             assert success is True
-            
+
             # Verify session is marked as cancelled
             retrieved = await manager.get_session(session_id)
             assert retrieved is not None
@@ -279,13 +258,7 @@ class TestMCPProtocolCompliance:
 
     def test_valid_command_message_format(self):
         """Test that command messages follow the expected format."""
-        message = {
-            "command": "init",
-            "data": {
-                "commit_hash": "abc123",
-                "project": "test-project"
-            }
-        }
+        message = {"command": "init", "data": {"commit_hash": "abc123", "project": "test-project"}}
 
         assert "command" in message
         assert "data" in message
@@ -296,7 +269,7 @@ class TestMCPProtocolCompliance:
         response = {
             "type": "response",
             "timestamp": "2024-01-01T00:00:00Z",
-            "data": {"status": "ready"}
+            "data": {"status": "ready"},
         }
 
         assert "type" in response
@@ -308,10 +281,7 @@ class TestMCPProtocolCompliance:
         error = {
             "type": "error",
             "timestamp": "2024-01-01T00:00:00Z",
-            "data": {
-                "error": "Invalid commit hash",
-                "code": "INVALID_COMMIT"
-            }
+            "data": {"error": "Invalid commit hash", "code": "INVALID_COMMIT"},
         }
 
         assert error["type"] == "error"
@@ -323,11 +293,7 @@ class TestMCPProtocolCompliance:
         state = {
             "type": "state",
             "timestamp": "2024-01-01T00:00:00Z",
-            "data": {
-                "session_id": "test-123",
-                "status": "active",
-                "current_question_index": 0
-            }
+            "data": {"session_id": "test-123", "status": "active", "current_question_index": 0},
         }
 
         assert state["type"] == "state"

@@ -6,14 +6,12 @@ including mock commits, storage backends, and test data generators.
 """
 
 import json
-import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List
 from unittest.mock import Mock
 
 import pytest
-
 
 # ============================================================================
 # Mock Commit Fixtures
@@ -196,9 +194,7 @@ def minimal_config() -> Dict:
     to run the commit reflection system.
     """
     return {
-        "storage_backends": [
-            {"backend_type": "jsonl", "path": "reflections.jsonl"}
-        ],
+        "storage_backends": [{"backend_type": "jsonl", "path": "reflections.jsonl"}],
         "questions": [
             {"id": "what", "text": "What changed?", "type": "text"},
             {"id": "why", "text": "Why did it change?", "type": "text"},
@@ -333,10 +329,11 @@ def sample_reflection_object():
     Returns a complete Reflection object with all required fields.
     """
     from uuid import uuid4
+
     from shared.types.reflection import (
+        CommitContext,
         Reflection,
         ReflectionAnswer,
-        CommitContext,
         SessionMetadata,
     )
 

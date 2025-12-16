@@ -9,11 +9,11 @@ __version__ = "0.1.0"
 
 # Re-export key types for convenience
 from .types import (
-    Reflection,
-    ReflectionAnswer,
+    CommitContext,
     Question,
     QuestionType,
-    CommitContext,
+    Reflection,
+    ReflectionAnswer,
     StorageBackend,
 )
 

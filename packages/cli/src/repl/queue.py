@@ -1,9 +1,8 @@
 """Commit queue for managing pending reflection requests."""
 
+from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional, List
-from collections import deque
 
 
 @dataclass
@@ -13,7 +12,7 @@ class QueuedCommit:
     commit_hash: str
     project: str
     branch: str
-    repo_path: Optional[str] = None  # Path to the git repository
+    repo_path: str | None = None  # Path to the git repository
     received_at: datetime = field(default_factory=datetime.now)
 
     @property
@@ -39,7 +38,7 @@ class CommitQueue:
             max_size: Maximum number of commits to queue (oldest dropped if exceeded)
         """
         self._queue: deque[QueuedCommit] = deque(maxlen=max_size)
-        self._current: Optional[QueuedCommit] = None
+        self._current: QueuedCommit | None = None
         self._max_size = max_size
 
     def enqueue(self, commit: QueuedCommit) -> int:
@@ -54,7 +53,7 @@ class CommitQueue:
         self._queue.append(commit)
         return len(self._queue)
 
-    def dequeue(self) -> Optional[QueuedCommit]:
+    def dequeue(self) -> QueuedCommit | None:
         """Get and remove the next commit from the queue.
 
         Also sets this commit as the "current" commit being processed.
@@ -67,7 +66,7 @@ class CommitQueue:
             return self._current
         return None
 
-    def peek(self) -> Optional[QueuedCommit]:
+    def peek(self) -> QueuedCommit | None:
         """Look at the next commit without removing it.
 
         Returns:
@@ -86,7 +85,7 @@ class CommitQueue:
         return len(self._queue) == 0
 
     @property
-    def current(self) -> Optional[QueuedCommit]:
+    def current(self) -> QueuedCommit | None:
         """The commit currently being processed (if any)."""
         return self._current
 
@@ -97,7 +96,7 @@ class CommitQueue:
         """
         self._current = None
 
-    def get_all(self) -> List[QueuedCommit]:
+    def get_all(self) -> list[QueuedCommit]:
         """Get all queued commits (for display purposes).
 
         Returns:

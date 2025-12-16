@@ -8,8 +8,9 @@ for storage backend instances.
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Dict, List, Optional
-from shared.types.storage import StorageBackend, StorageError
+from typing import Dict, List
+
+from shared.types.storage import StorageBackend
 
 
 class HealthStatus(Enum):
@@ -132,9 +133,7 @@ class StorageHealthChecker:
             write_success = self.backend.write(test_record)
 
             if not write_success:
-                latency = (
-                    datetime.now(timezone.utc) - start_time
-                ).total_seconds() * 1000
+                latency = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
                 return HealthCheckResult(
                     status=HealthStatus.DEGRADED,
                     backend_type=self.backend.get_type(),

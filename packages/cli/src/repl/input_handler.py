@@ -2,7 +2,6 @@
 
 import asyncio
 import sys
-from typing import Optional
 
 
 class AsyncInputHandler:
@@ -16,7 +15,7 @@ class AsyncInputHandler:
         """Initialize the input handler."""
         self._queue: asyncio.Queue[str] = asyncio.Queue()
         self._running = False
-        self._loop: Optional[asyncio.AbstractEventLoop] = None
+        self._loop: asyncio.AbstractEventLoop | None = None
 
     async def start(self) -> None:
         """Start listening for stdin input.
@@ -64,7 +63,7 @@ class AsyncInputHandler:
             # stdin closed or error
             pass
 
-    async def get_input(self, timeout: Optional[float] = None) -> Optional[str]:
+    async def get_input(self, timeout: float | None = None) -> str | None:
         """Get the next line of input.
 
         Args:
@@ -85,8 +84,8 @@ class AsyncInputHandler:
     async def prompt(
         self,
         message: str,
-        timeout: Optional[float] = None,
-    ) -> Optional[str]:
+        timeout: float | None = None,
+    ) -> str | None:
         """Display a prompt and wait for input.
 
         Args:
@@ -102,9 +101,9 @@ class AsyncInputHandler:
     async def prompt_yes_no(
         self,
         message: str,
-        default: Optional[bool] = None,
-        timeout: Optional[float] = None,
-    ) -> Optional[bool]:
+        default: bool | None = None,
+        timeout: float | None = None,
+    ) -> bool | None:
         """Prompt for yes/no response.
 
         Args:

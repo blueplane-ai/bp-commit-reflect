@@ -1,7 +1,6 @@
 """Progress indicators and user feedback."""
 
 import sys
-from typing import Optional
 
 
 class ProgressIndicator:
@@ -48,8 +47,8 @@ class ProgressIndicator:
         self,
         question_num: int,
         question_text: str,
-        help_text: Optional[str] = None,
-        optional: bool = False
+        help_text: str | None = None,
+        optional: bool = False,
     ) -> None:
         """
         Display a question with progress indicator.
@@ -71,7 +70,7 @@ class ProgressIndicator:
         if help_text:
             print(f"{self.BLUE}ℹ  {help_text}{self.RESET}")
 
-    def show_error(self, error_message: str, help_text: Optional[str] = None) -> None:
+    def show_error(self, error_message: str, help_text: str | None = None) -> None:
         """
         Display an error message.
 
@@ -101,11 +100,7 @@ class ProgressIndicator:
         """
         print(f"{self.YELLOW}⚠  {message}{self.RESET}")
 
-    def show_storage_status(
-        self,
-        successful_backends: list,
-        failed_backends: list
-    ) -> None:
+    def show_storage_status(self, successful_backends: list, failed_backends: list) -> None:
         """
         Display storage operation status.
 
@@ -139,7 +134,9 @@ class ProgressIndicator:
         print(f"\n{self.YELLOW}⚠  Found incomplete reflection session:{self.RESET}")
         print(f"   Project: {session_info.get('project', 'unknown')}")
         print(f"   Commit:  {session_info.get('commit', 'unknown')}")
-        print(f"   Progress: {session_info.get('questions_answered', 0)}/{self.total_questions} questions")
+        print(
+            f"   Progress: {session_info.get('questions_answered', 0)}/{self.total_questions} questions"
+        )
 
         response = input(f"\n{self.BOLD}Recover this session? [y/N]:{self.RESET} ").strip().lower()
         return response in ["y", "yes"]

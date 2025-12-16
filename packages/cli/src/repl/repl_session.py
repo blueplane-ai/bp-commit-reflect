@@ -7,20 +7,18 @@ terminal interface that listens for git commits and prompts for reflections.
 import asyncio
 import signal
 from pathlib import Path
-from typing import Optional
 
-from shared.types.config import Config, StorageConfig, StorageBackendType
-from shared.types.question import create_default_question_set
 from shared.storage.factory import create_storage_from_config
+from shared.types.config import Config, StorageBackendType, StorageConfig
+from shared.types.question import create_default_question_set
 
+from ..git_utils import GitError, get_commit_context
 from ..session import ReflectionSession
-from ..git_utils import get_commit_context, GitError
-
-from .state_machine import StateMachine, REPLState, StateContext
+from .display import REPLDisplay
+from .input_handler import AsyncInputHandler
 from .queue import CommitQueue, QueuedCommit
 from .server import CommitNotificationServer
-from .input_handler import AsyncInputHandler
-from .display import REPLDisplay
+from .state_machine import REPLState, StateMachine
 
 
 class REPLMode:
@@ -35,8 +33,8 @@ class REPLMode:
         self,
         project: str,
         port: int = 9123,
-        config: Optional[Config] = None,
-        working_dir: Optional[Path] = None,
+        config: Config | None = None,
+        working_dir: Path | None = None,
     ):
         """Initialize REPL mode.
 
@@ -62,7 +60,7 @@ class REPLMode:
         self.display = REPLDisplay()
 
         # Current reflection session (if any)
-        self._current_session: Optional[ReflectionSession] = None
+        self._current_session: ReflectionSession | None = None
 
         # Control flags
         self._should_exit = False
@@ -99,8 +97,7 @@ class REPLMode:
         except OSError as e:
             if "Address already in use" in str(e):
                 self.display.show_error(
-                    f"Port {self.port} is already in use. "
-                    f"Try a different port with --port"
+                    f"Port {self.port} is already in use. " f"Try a different port with --port"
                 )
             else:
                 self.display.show_error(str(e))
@@ -165,7 +162,9 @@ class REPLMode:
         elif command:
             # Unknown command - show help hint
             self.display.clear_line()
-            self.display.show_message(f"Unknown command: '{command}'. Type 'help' for available commands.")
+            self.display.show_message(
+                f"Unknown command: '{command}'. Type 'help' for available commands."
+            )
 
     async def _handle_prompting_state(self) -> None:
         """Handle PROMPTING state - ask user to start reflection."""
@@ -294,10 +293,7 @@ class REPLMode:
 
         # Build summary data for display
         answers = self._current_session.state.answers
-        questions = [
-            {"id": q.id, "text": q.text}
-            for q in self._current_session.questions
-        ]
+        questions = [{"id": q.id, "text": q.text} for q in self._current_session.questions]
 
         # Show summary
         self.display.show_summary(answers, questions)
@@ -449,8 +445,8 @@ class REPLMode:
 async def run_repl_mode(
     project: str,
     port: int = 9123,
-    config: Optional[Config] = None,
-    working_dir: Optional[Path] = None,
+    config: Config | None = None,
+    working_dir: Path | None = None,
 ) -> int:
     """Entry point for REPL mode.
 

@@ -7,7 +7,7 @@ representing commit reflections, including answers, context, and metadata.
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
 
@@ -23,6 +23,7 @@ class ReflectionAnswer:
         answered_at: Timestamp when the answer was provided
         metadata: Optional metadata about the answer (e.g., time to answer)
     """
+
     question_id: str
     question_text: str
     answer: str
@@ -70,6 +71,7 @@ class CommitContext:
         deletions: Number of line deletions
         changed_files: List of file paths that were changed
     """
+
     commit_hash: str
     commit_message: str
     branch: str
@@ -128,6 +130,7 @@ class SessionMetadata:
         interrupted: Whether the session was interrupted before completion
         additional_context: Any additional context provided
     """
+
     session_id: UUID
     started_at: datetime
     completed_at: Optional[datetime] = None
@@ -167,8 +170,9 @@ class SessionMetadata:
         return cls(
             session_id=UUID(data["session_id"]),
             started_at=datetime.fromisoformat(data["started_at"]),
-            completed_at=datetime.fromisoformat(data["completed_at"])
-                if data.get("completed_at") else None,
+            completed_at=(
+                datetime.fromisoformat(data["completed_at"]) if data.get("completed_at") else None
+            ),
             project_name=data.get("project_name"),
             tool_version=data.get("tool_version"),
             environment=data.get("environment"),
@@ -193,6 +197,7 @@ class Reflection:
         created_at: When the reflection was created
         updated_at: When the reflection was last updated
     """
+
     id: UUID
     answers: List[ReflectionAnswer]
     commit_context: CommitContext

@@ -5,13 +5,11 @@ This hook detects when commits are made via Claude Code and automatically
 triggers the reflection flow by communicating with the MCP server.
 """
 
-import asyncio
 import json
 import logging
 import re
 import subprocess
-from typing import Dict, Any, Optional, List
-
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +22,7 @@ class CommitReflectionHook:
     initiates a reflection session through the MCP server.
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         """
         Initialize the commit reflection hook.
 
@@ -44,7 +42,9 @@ class CommitReflectionHook:
             r"git\s+commit\s+--message",
         ]
 
-    async def on_tool_use(self, tool_name: str, tool_input: Dict[str, Any], tool_result: Any) -> Optional[str]:
+    async def on_tool_use(
+        self, tool_name: str, tool_input: dict[str, Any], tool_result: Any
+    ) -> str | None:
         """
         Hook called after a tool is used.
 
@@ -103,7 +103,7 @@ class CommitReflectionHook:
                 return True
         return False
 
-    async def _extract_commit_info(self) -> Optional[Dict[str, Any]]:
+    async def _extract_commit_info(self) -> dict[str, Any] | None:
         """
         Extract information about the most recent commit.
 
@@ -113,19 +113,13 @@ class CommitReflectionHook:
         try:
             # Get latest commit hash
             result = subprocess.run(
-                ["git", "rev-parse", "HEAD"],
-                capture_output=True,
-                text=True,
-                check=True
+                ["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True
             )
             commit_hash = result.stdout.strip()
 
             # Get commit message
             result = subprocess.run(
-                ["git", "log", "-1", "--pretty=%B"],
-                capture_output=True,
-                text=True,
-                check=True
+                ["git", "log", "-1", "--pretty=%B"], capture_output=True, text=True, check=True
             )
             commit_message = result.stdout.strip()
 
@@ -134,7 +128,7 @@ class CommitReflectionHook:
                 ["git", "rev-parse", "--abbrev-ref", "HEAD"],
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
             branch = result.stdout.strip()
 
@@ -143,12 +137,14 @@ class CommitReflectionHook:
                 ["git", "show", "--stat", "--pretty=format:", commit_hash],
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
             stats = result.stdout.strip()
 
             # Parse stats for file counts
-            files_changed = len([line for line in stats.split('\n') if line.strip() and '|' in line])
+            files_changed = len(
+                [line for line in stats.split("\n") if line.strip() and "|" in line]
+            )
 
             # Get project name from git remote or directory
             project_name = None
@@ -157,19 +153,22 @@ class CommitReflectionHook:
                     ["git", "remote", "get-url", "origin"],
                     capture_output=True,
                     text=True,
-                    check=True
+                    check=True,
                 )
                 remote_url = result.stdout.strip()
                 # Extract project name from URL
                 if remote_url:
-                    project_name = remote_url.rstrip('/').split('/')[-1].replace('.git', '')
+                    project_name = remote_url.rstrip("/").split("/")[-1].replace(".git", "")
             except subprocess.CalledProcessError:
                 # No remote, use directory name
                 result = subprocess.run(
-                    ["basename", subprocess.run(["pwd"], capture_output=True, text=True).stdout.strip()],
+                    [
+                        "basename",
+                        subprocess.run(["pwd"], capture_output=True, text=True).stdout.strip(),
+                    ],
                     capture_output=True,
                     text=True,
-                    check=True
+                    check=True,
                 )
                 project_name = result.stdout.strip()
 
@@ -185,7 +184,7 @@ class CommitReflectionHook:
             logger.error(f"Failed to extract commit info: {e}")
             return None
 
-    def _generate_reflection_prompt(self, commit_info: Dict[str, Any]) -> str:
+    def _generate_reflection_prompt(self, commit_info: dict[str, Any]) -> str:
         """
         Generate a prompt asking if user wants to reflect.
 
@@ -195,9 +194,9 @@ class CommitReflectionHook:
         Returns:
             Formatted prompt string
         """
-        commit_hash_short = commit_info['hash'][:8]
-        message_preview = commit_info['message'][:60]
-        if len(commit_info['message']) > 60:
+        commit_hash_short = commit_info["hash"][:8]
+        message_preview = commit_info["message"][:60]
+        if len(commit_info["message"]) > 60:
             message_preview += "..."
 
         return f"""
@@ -222,7 +221,7 @@ This reflection will be saved alongside your commit for future reference.
 Would you like to start a reflection session? (yes/no)
 """
 
-    async def _start_reflection_session(self, commit_info: Dict[str, Any]) -> Dict[str, Any]:
+    async def _start_reflection_session(self, commit_info: dict[str, Any]) -> dict[str, Any]:
         """
         Start a reflection session via MCP server.
 
@@ -248,11 +247,7 @@ Would you like to start a reflection session? (yes/no)
         #     ) as response:
         #         return await response.json()
 
-        return {
-            "success": True,
-            "session_id": "mock-session-id",
-            "message": "Reflection started"
-        }
+        return {"success": True, "session_id": "mock-session-id", "message": "Reflection started"}
 
 
 class ReflectionQuestionFlow:
@@ -291,7 +286,7 @@ class ReflectionQuestionFlow:
 
         return self._format_question(self.current_question)
 
-    async def submit_answer(self, answer: str) -> Optional[str]:
+    async def submit_answer(self, answer: str) -> str | None:
         """
         Submit an answer and get the next question.
 
@@ -328,7 +323,7 @@ class ReflectionQuestionFlow:
 
         return "Reflection cancelled. No worries, you can reflect on commits anytime!"
 
-    def _format_question(self, question: Dict[str, Any]) -> str:
+    def _format_question(self, question: dict[str, Any]) -> str:
         """
         Format a question for display in chat.
 
@@ -353,7 +348,7 @@ class ReflectionQuestionFlow:
 
         return formatted
 
-    async def _get_next_question(self) -> Optional[Dict[str, Any]]:
+    async def _get_next_question(self) -> dict[str, Any] | None:
         """
         Get the next question from MCP server.
 
@@ -364,10 +359,10 @@ class ReflectionQuestionFlow:
         return {
             "text": "What did you accomplish in this commit?",
             "help_text": "Describe the changes you made and why",
-            "required": True
+            "required": True,
         }
 
-    async def _send_answer(self, answer: str) -> Dict[str, Any]:
+    async def _send_answer(self, answer: str) -> dict[str, Any]:
         """
         Send answer to MCP server.
 
@@ -384,13 +379,13 @@ class ReflectionQuestionFlow:
             "question": {
                 "text": "On a scale of 1-5, how confident are you about these changes?",
                 "help_text": "1 = Not confident, 5 = Very confident",
-                "required": True
-            }
+                "required": True,
+            },
         }
 
 
 # Hook registration for Claude Code
-async def post_tool_use(tool_name: str, tool_input: Dict[str, Any], tool_result: Any) -> Optional[str]:
+async def post_tool_use(tool_name: str, tool_input: dict[str, Any], tool_result: Any) -> str | None:
     """
     Claude Code hook entry point.
 
@@ -405,7 +400,7 @@ async def post_tool_use(tool_name: str, tool_input: Dict[str, Any], tool_result:
     # Load configuration from .claude/hooks/commit-reflect.json
     config = {}
     try:
-        with open(".claude/hooks/commit-reflect.json", "r") as f:
+        with open(".claude/hooks/commit-reflect.json") as f:
             config = json.load(f)
     except FileNotFoundError:
         pass  # Use defaults

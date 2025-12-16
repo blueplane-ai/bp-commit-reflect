@@ -7,14 +7,15 @@ session completion.
 """
 
 import uuid
-from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from typing import Any
 
-from shared.types.question import Question, QuestionSet, create_default_question_set
-from shared.types.reflection import Reflection, CommitContext, SessionMetadata
 from shared.types.config import Config
-from .validators import validate_question_answer, ValidationError
+from shared.types.question import Question, QuestionSet, create_default_question_set
+from shared.types.reflection import CommitContext, Reflection, SessionMetadata
+
+from .validators import validate_question_answer
 
 
 @dataclass
@@ -30,14 +31,15 @@ class SessionState:
         commit_context: Context about the commit being reflected on
         is_complete: Whether all required questions are answered
     """
+
     session_id: str
     current_question_index: int = 0
-    answers: Dict[str, Any] = field(default_factory=dict)
+    answers: dict[str, Any] = field(default_factory=dict)
     started_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    commit_context: Optional[CommitContext] = None
+    commit_context: CommitContext | None = None
     is_complete: bool = False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert state to dictionary for serialization."""
         return {
             "session_id": self.session_id,
@@ -48,7 +50,7 @@ class SessionState:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "SessionState":
+    def from_dict(cls, data: dict[str, Any]) -> "SessionState":
         """Create state from dictionary."""
         return cls(
             session_id=data["session_id"],
@@ -80,9 +82,9 @@ class ReflectionSession:
     def __init__(
         self,
         commit_context: CommitContext,
-        question_set: Optional[QuestionSet] = None,
-        session_id: Optional[str] = None,
-        config: Optional[Config] = None,
+        question_set: QuestionSet | None = None,
+        session_id: str | None = None,
+        config: Config | None = None,
     ):
         """
         Initialize a reflection session.
@@ -101,12 +103,9 @@ class ReflectionSession:
         self.config = config
 
         # Sort questions by order
-        self.questions = sorted(
-            self.question_set.questions,
-            key=lambda q: q.order
-        )
+        self.questions = sorted(self.question_set.questions, key=lambda q: q.order)
 
-    def get_current_question(self) -> Optional[Question]:
+    def get_current_question(self) -> Question | None:
         """
         Get the current question to ask.
 
@@ -121,7 +120,7 @@ class ReflectionSession:
 
         return self.questions[self.state.current_question_index]
 
-    def answer_current_question(self, answer: Any) -> tuple[bool, Optional[str]]:
+    def answer_current_question(self, answer: Any) -> tuple[bool, str | None]:
         """
         Answer the current question and advance to next.
 
@@ -152,7 +151,7 @@ class ReflectionSession:
 
         return True, None
 
-    def skip_current_question(self) -> tuple[bool, Optional[str]]:
+    def skip_current_question(self) -> tuple[bool, str | None]:
         """
         Skip the current question (only if it's optional).
 
@@ -222,7 +221,7 @@ class ReflectionSession:
         """
         return (self.state.current_question_index + 1, len(self.questions))
 
-    def get_answered_questions(self) -> List[str]:
+    def get_answered_questions(self) -> list[str]:
         """
         Get list of question IDs that have been answered.
 
@@ -231,7 +230,7 @@ class ReflectionSession:
         """
         return list(self.state.answers.keys())
 
-    def get_answer(self, question_id: str) -> Optional[Any]:
+    def get_answer(self, question_id: str) -> Any | None:
         """
         Get the answer for a specific question.
 
@@ -261,25 +260,32 @@ class ReflectionSession:
             session_id=uuid.UUID(self.state.session_id),
             started_at=self.state.started_at,
             completed_at=datetime.now(timezone.utc),
-            additional_context={
-                "question_set_version": self.question_set.version,
-            } if hasattr(self.question_set, 'version') else None,
+            additional_context=(
+                {
+                    "question_set_version": self.question_set.version,
+                }
+                if hasattr(self.question_set, "version")
+                else None
+            ),
         )
 
         # Convert answers dict to list of ReflectionAnswer objects
         from shared.types.reflection import ReflectionAnswer
+
         answer_list = []
         for question in self.question_set.questions:
             if question.id in self.state.answers:
                 answer_value = self.state.answers[question.id]
                 # Convert answer value to string if it's not already
                 answer_str = str(answer_value) if answer_value is not None else ""
-                answer_list.append(ReflectionAnswer(
-                    question_id=question.id,
-                    question_text=question.text,
-                    answer=answer_str,
-                    answered_at=self.state.started_at,  # We don't track individual answer times
-                ))
+                answer_list.append(
+                    ReflectionAnswer(
+                        question_id=question.id,
+                        question_text=question.text,
+                        answer=answer_str,
+                        answered_at=self.state.started_at,  # We don't track individual answer times
+                    )
+                )
 
         # Create the reflection
         now = datetime.now(timezone.utc)
@@ -308,8 +314,8 @@ class ReflectionSession:
         cls,
         state: SessionState,
         commit_context: CommitContext,
-        question_set: Optional[QuestionSet] = None,
-        config: Optional[Config] = None,
+        question_set: QuestionSet | None = None,
+        config: Config | None = None,
     ) -> "ReflectionSession":
         """
         Restore a session from saved state.

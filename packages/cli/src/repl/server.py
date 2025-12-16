@@ -3,8 +3,8 @@
 import asyncio
 import json
 import urllib.parse
+from collections.abc import Callable
 from datetime import datetime
-from typing import Optional, Callable
 
 from .queue import QueuedCommit
 
@@ -20,7 +20,7 @@ class CommitNotificationServer:
         self,
         port: int = 9123,
         host: str = "127.0.0.1",
-        on_commit: Optional[Callable[[QueuedCommit], None]] = None,
+        on_commit: Callable[[QueuedCommit], None] | None = None,
     ):
         """Initialize the server.
 
@@ -32,7 +32,7 @@ class CommitNotificationServer:
         self.port = port
         self.host = host
         self.on_commit = on_commit
-        self._server: Optional[asyncio.Server] = None
+        self._server: asyncio.Server | None = None
         self._running = False
 
     async def start(self) -> None:
@@ -138,7 +138,7 @@ class CommitNotificationServer:
         else:
             return self._response(404, "Not Found")
 
-    def _parse_commit_request(self, request: str) -> Optional[QueuedCommit]:
+    def _parse_commit_request(self, request: str) -> QueuedCommit | None:
         """Parse commit data from HTTP request body.
 
         Supports both URL-encoded and JSON formats.

@@ -6,10 +6,10 @@ implement, ensuring consistent behavior across different storage types.
 """
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from .reflection import Reflection
@@ -17,31 +17,37 @@ from .reflection import Reflection
 
 class StorageError(Exception):
     """Base exception for storage-related errors."""
+
     pass
 
 
 class StorageConnectionError(StorageError):
     """Error connecting to storage backend."""
+
     pass
 
 
 class StorageWriteError(StorageError):
     """Error writing to storage backend."""
+
     pass
 
 
 class StorageReadError(StorageError):
     """Error reading from storage backend."""
+
     pass
 
 
 class StorageValidationError(StorageError):
     """Error validating data for storage."""
+
     pass
 
 
 class SortOrder(str, Enum):
     """Sort order for query results."""
+
     ASC = "asc"
     DESC = "desc"
 
@@ -63,6 +69,7 @@ class QueryOptions:
         branch: Filter by branch name
         author_email: Filter by author email
     """
+
     limit: Optional[int] = None
     offset: int = 0
     sort_by: str = "created_at"
@@ -97,13 +104,16 @@ class StorageResult:
         data: Optional data returned from the operation
         error: Optional error if operation failed
     """
+
     success: bool
     message: Optional[str] = None
     data: Optional[Any] = None
     error: Optional[Exception] = None
 
     @classmethod
-    def success_result(cls, message: str = "Operation successful", data: Any = None) -> "StorageResult":
+    def success_result(
+        cls, message: str = "Operation successful", data: Any = None
+    ) -> "StorageResult":
         """Create a successful result."""
         return cls(success=True, message=message, data=data)
 
@@ -284,9 +294,7 @@ class StorageBackend(ABC):
         return True, None
 
     def get_recent_reflections(
-        self,
-        limit: int = 10,
-        project_name: Optional[str] = None
+        self, limit: int = 10, project_name: Optional[str] = None
     ) -> List[Reflection]:
         """
         Get the most recent reflections.
@@ -324,10 +332,7 @@ class StorageBackend(ABC):
         return self.query_reflections(options)
 
     def get_reflections_by_date_range(
-        self,
-        date_from: datetime,
-        date_to: datetime,
-        project_name: Optional[str] = None
+        self, date_from: datetime, date_to: datetime, project_name: Optional[str] = None
     ) -> List[Reflection]:
         """
         Get reflections within a date range.
@@ -396,8 +401,7 @@ class MultiBackendStorage:
                 results[backend_name] = backend.save_reflection(reflection)
             except Exception as e:
                 results[backend_name] = StorageResult.error_result(
-                    f"Error saving to {backend_name}",
-                    error=e
+                    f"Error saving to {backend_name}", error=e
                 )
         return results
 

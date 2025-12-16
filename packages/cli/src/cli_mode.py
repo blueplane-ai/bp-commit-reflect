@@ -5,29 +5,27 @@ This module implements the interactive terminal-based reflection flow.
 """
 
 import sys
-from pathlib import Path
-from typing import Optional
 from argparse import Namespace
+from pathlib import Path
 
-from shared.types.config import Config, StorageConfig, StorageBackendType
-from shared.types.question import create_default_question_set
-from shared.storage.factory import create_storage_from_config
-from cli.src.session import ReflectionSession
-from cli.src.git_utils import get_commit_context, GitError
+from cli.src.errors import ConfigurationError
+from cli.src.git_utils import GitError, get_commit_context
 from cli.src.prompts import (
-    display_welcome,
-    display_error,
-    display_validation_error,
-    prompt_for_answer,
-    display_summary,
     confirm_submission,
     display_completion_message,
+    display_error,
+    display_summary,
+    display_validation_error,
+    display_welcome,
+    prompt_for_answer,
 )
-from cli.src.errors import ConfigurationError, StorageError
-from cli.src.progress import ProgressIndicator
+from cli.src.session import ReflectionSession
+from shared.storage.factory import create_storage_from_config
+from shared.types.config import Config, StorageBackendType, StorageConfig
+from shared.types.question import create_default_question_set
 
 
-def load_config(config_path: Optional[str], args: Namespace) -> Config:
+def load_config(config_path: str | None, args: Namespace) -> Config:
     """
     Load configuration from file and command-line arguments.
 
@@ -53,23 +51,27 @@ def load_config(config_path: Optional[str], args: Namespace) -> Config:
 
     # Override with command-line arguments
     if args.storage:
-        backends = args.storage.split(',')
+        backends = args.storage.split(",")
         config.storage_backends = []
         for backend in backends:
-            if backend == 'jsonl':
-                path = args.jsonl_path or '.commit-reflections.jsonl'
-                config.storage_backends.append(StorageConfig(
-                    backend_type=StorageBackendType.JSONL,
-                    path=path,
-                    enabled=True,
-                ))
-            elif backend == 'sqlite' or backend == 'database':
-                path = args.db_path or '~/.commit-reflect/reflections.db'
-                config.storage_backends.append(StorageConfig(
-                    backend_type=StorageBackendType.SQLITE,
-                    path=path,
-                    enabled=True,
-                ))
+            if backend == "jsonl":
+                path = args.jsonl_path or ".commit-reflections.jsonl"
+                config.storage_backends.append(
+                    StorageConfig(
+                        backend_type=StorageBackendType.JSONL,
+                        path=path,
+                        enabled=True,
+                    )
+                )
+            elif backend == "sqlite" or backend == "database":
+                path = args.db_path or "~/.commit-reflect/reflections.db"
+                config.storage_backends.append(
+                    StorageConfig(
+                        backend_type=StorageBackendType.SQLITE,
+                        path=path,
+                        enabled=True,
+                    )
+                )
 
     return config
 
@@ -104,6 +106,7 @@ def run_interactive_mode(args: Namespace) -> int:
         if not project_name:
             try:
                 from cli.src.git_utils import get_repository_root
+
                 repo_root = get_repository_root()
                 project_name = repo_root.name
             except:
@@ -151,10 +154,7 @@ def run_interactive_mode(args: Namespace) -> int:
                         display_validation_error(error)
 
         # Show summary
-        display_summary(
-            session.state.answers,
-            session.questions
-        )
+        display_summary(session.state.answers, session.questions)
 
         # Confirm submission
         if not confirm_submission():
@@ -177,9 +177,9 @@ def run_interactive_mode(args: Namespace) -> int:
 
                 if success:
                     backend_name = storage_config.backend_type.value
-                    if backend_name == 'jsonl':
+                    if backend_name == "jsonl":
                         storage_info_lines.append(f"✓ Saved to JSONL: {storage_config.path}")
-                    elif backend_name == 'sqlite':
+                    elif backend_name == "sqlite":
                         storage_info_lines.append(f"✓ Saved to database: {storage_config.path}")
                     else:
                         storage_info_lines.append(f"✓ Saved to {backend_name}")
@@ -204,5 +204,6 @@ def run_interactive_mode(args: Namespace) -> int:
     except Exception as e:
         display_error(f"Unexpected error: {e}")
         import traceback
+
         traceback.print_exc(file=sys.stderr)
         return 1

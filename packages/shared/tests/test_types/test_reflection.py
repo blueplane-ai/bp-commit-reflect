@@ -7,10 +7,10 @@ Tests the core Reflection data model including:
 - Field requirements and constraints
 """
 
-import pytest
 from datetime import datetime, timezone
-from uuid import uuid4, UUID
-from shared.types.reflection import Reflection, CommitContext, ReflectionAnswer, SessionMetadata
+from uuid import UUID, uuid4
+
+from shared.types.reflection import CommitContext, Reflection, ReflectionAnswer, SessionMetadata
 
 
 class TestCommitContext:

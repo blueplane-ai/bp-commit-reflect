@@ -1,8 +1,9 @@
 """REPL state machine for managing interactive reflection flow."""
 
-from enum import Enum, auto
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Optional, Callable, List, Any
+from enum import Enum, auto
+from typing import Any
 
 
 class REPLState(Enum):
@@ -18,10 +19,10 @@ class REPLState(Enum):
 class StateContext:
     """Context passed during state transitions."""
 
-    current_commit_hash: Optional[str] = None
+    current_commit_hash: str | None = None
     pending_count: int = 0
     current_question_index: int = 0
-    last_error: Optional[str] = None
+    last_error: str | None = None
     metadata: dict = field(default_factory=dict)
 
 
@@ -33,7 +34,7 @@ class StateMachine:
     """Manages REPL state transitions with validation and callbacks."""
 
     # Valid state transitions
-    _VALID_TRANSITIONS: dict[REPLState, List[REPLState]] = {
+    _VALID_TRANSITIONS: dict[REPLState, list[REPLState]] = {
         REPLState.HOME: [REPLState.PROMPTING],
         REPLState.PROMPTING: [REPLState.HOME, REPLState.IN_REFLECTION],
         REPLState.IN_REFLECTION: [REPLState.COMPLETING, REPLState.HOME],
@@ -48,7 +49,7 @@ class StateMachine:
         """
         self._state = initial_state
         self._context = StateContext()
-        self._listeners: List[StateTransitionCallback] = []
+        self._listeners: list[StateTransitionCallback] = []
 
     @property
     def state(self) -> REPLState:
@@ -63,7 +64,7 @@ class StateMachine:
     def transition_to(
         self,
         new_state: REPLState,
-        context_updates: Optional[dict[str, Any]] = None,
+        context_updates: dict[str, Any] | None = None,
     ) -> bool:
         """Transition to a new state if valid.
 

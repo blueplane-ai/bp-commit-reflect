@@ -1,9 +1,9 @@
 """User experience validation tests."""
 
-import pytest
-from io import StringIO
 import sys
 from pathlib import Path
+
+import pytest
 
 # Add project root to path for imports
 project_root = Path(__file__).parent.parent.parent.parent
@@ -25,12 +25,11 @@ class TestProgressIndicators:
         """Verify progress indicator shows total question count."""
         progress = ProgressIndicator(total_questions=5, use_color=False)
         assert progress.total_questions == 5
-        
+
         # Progress indicator should show [N/total] format
         import io
-        import sys
         from contextlib import redirect_stdout
-        
+
         f = io.StringIO()
         with redirect_stdout(f):
             progress.show_question(2, "Test")
@@ -40,9 +39,8 @@ class TestProgressIndicators:
     def test_optional_questions_labeled(self):
         """Verify optional questions are clearly labeled."""
         import io
-        import sys
         from contextlib import redirect_stdout
-        
+
         progress = ProgressIndicator(use_color=False)
         f = io.StringIO()
         with redirect_stdout(f):
@@ -57,19 +55,18 @@ class TestErrorMessages:
     def test_validation_error_includes_help(self):
         """Verify validation errors include helpful guidance."""
         from packages.cli.src.validators import ValidationError
-        
+
         error = ValidationError(
-            "Value must be between 1 and 5",
-            help_text="Please enter a number from 1 to 5"
+            "Value must be between 1 and 5", help_text="Please enter a number from 1 to 5"
         )
-        
+
         assert error.message == "Value must be between 1 and 5"
         assert error.help_text == "Please enter a number from 1 to 5"
-        
+
         # Test that ProgressIndicator displays help text
         import io
         from contextlib import redirect_stdout
-        
+
         progress = ProgressIndicator(use_color=False)
         f = io.StringIO()
         with redirect_stdout(f):
@@ -80,15 +77,14 @@ class TestErrorMessages:
     def test_storage_error_suggests_recovery(self):
         """Verify storage errors suggest recovery options."""
         progress = ProgressIndicator(use_color=False)
-        
+
         import io
         from contextlib import redirect_stdout
-        
+
         f = io.StringIO()
         with redirect_stdout(f):
             progress.show_error(
-                "Failed to write to storage",
-                "Check file permissions or disk space"
+                "Failed to write to storage", "Check file permissions or disk space"
             )
         output = f.getvalue()
         assert "Failed to write" in output
@@ -97,10 +93,9 @@ class TestErrorMessages:
     def test_configuration_error_shows_fix(self):
         """Verify configuration errors show how to fix."""
         from packages.cli.src.validators import ValidationError
-        
+
         error = ValidationError(
-            "Invalid configuration",
-            help_text="Check .commit-reflect/config.json for syntax errors"
+            "Invalid configuration", help_text="Check .commit-reflect/config.json for syntax errors"
         )
 
         assert "Invalid configuration" in error.message
@@ -127,19 +122,20 @@ class TestColorOutput:
         # Colors are only enabled if stdout.isatty() is True
         # In test environment, this may be False, so we just verify
         # the structure is correct
-        assert hasattr(progress, 'BLUE')
-        assert hasattr(progress, 'GREEN')
-        assert hasattr(progress, 'RESET')
+        assert hasattr(progress, "BLUE")
+        assert hasattr(progress, "GREEN")
+        assert hasattr(progress, "RESET")
 
     def test_color_codes_correct(self):
         """Verify ANSI color codes are correct."""
         # Test that color codes are properly formatted when enabled
         import sys
+
         original_isatty = sys.stdout.isatty
-        
+
         # Mock isatty to return True
         sys.stdout.isatty = lambda: True
-        
+
         try:
             progress = ProgressIndicator(use_color=True)
             # Verify color codes are ANSI escape sequences

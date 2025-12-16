@@ -8,12 +8,14 @@ storage backends, session settings, and MCP server configuration.
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
+
 from .question import QuestionConfig
 
 
 class StorageBackendType(str, Enum):
     """Types of storage backends available."""
+
     JSONL = "jsonl"
     SQLITE = "sqlite"
     GIT = "git"
@@ -31,6 +33,7 @@ class StorageConfig:
         path: File path for the storage (if applicable)
         options: Backend-specific options
     """
+
     backend_type: StorageBackendType
     enabled: bool = True
     priority: int = 0
@@ -98,6 +101,7 @@ class SessionConfig:
         show_commit_diff: Whether to show commit diff during reflection
         confirm_before_complete: Whether to confirm before completing
     """
+
     timeout: Optional[int] = None
     auto_save: bool = True
     allow_skip: bool = True
@@ -142,6 +146,7 @@ class MCPConfig:
         session_cleanup_interval: Interval to clean up stale sessions (seconds)
         process_timeout: Timeout for CLI processes (seconds)
     """
+
     enabled: bool = False
     host: str = "localhost"
     port: int = 3000
@@ -188,6 +193,7 @@ class Config:
         mcp: MCP server configuration
         environment: Environment-specific settings
     """
+
     project_name: Optional[str] = None
     storage_backends: List[StorageConfig] = field(default_factory=list)
     session: SessionConfig = field(default_factory=SessionConfig)
@@ -249,12 +255,9 @@ class Config:
         """Create config from dictionary representation."""
         return cls(
             project_name=data.get("project_name"),
-            storage_backends=[
-                StorageConfig.from_dict(b) for b in data.get("storage_backends", [])
-            ],
+            storage_backends=[StorageConfig.from_dict(b) for b in data.get("storage_backends", [])],
             session=SessionConfig.from_dict(data.get("session", {})),
-            questions=QuestionConfig.from_dict(data["questions"])
-                if "questions" in data else None,
+            questions=QuestionConfig.from_dict(data["questions"]) if "questions" in data else None,
             mcp=MCPConfig.from_dict(data.get("mcp", {})),
             environment=data.get("environment"),
         )
@@ -327,7 +330,7 @@ class Config:
             raise FileNotFoundError(f"Config file not found: {path}")
 
         try:
-            with open(path, "r") as f:
+            with open(path) as f:
                 data = json.load(f)
             return cls.from_dict(data)
         except json.JSONDecodeError as e:
