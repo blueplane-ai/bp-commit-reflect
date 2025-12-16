@@ -1,10 +1,14 @@
 """Performance profiling tests."""
 
+import sys
 import tempfile
 import time
 from pathlib import Path
 
 import pytest
+
+# Windows CI runners have slower I/O, use more generous thresholds
+IS_WINDOWS = sys.platform == "win32"
 
 
 class TestStoragePerformance:
@@ -96,8 +100,11 @@ class TestStoragePerformance:
 
         assert len(reflections) == 1000
         # Should handle 1000 entries in reasonable time
-        assert write_time < 10, f"Write too slow: {write_time:.2f}s"
-        assert read_time < 1, f"Read too slow: {read_time:.2f}s"
+        # Windows CI has slower I/O, use more generous thresholds
+        write_threshold = 20 if IS_WINDOWS else 10
+        read_threshold = 2 if IS_WINDOWS else 1
+        assert write_time < write_threshold, f"Write too slow: {write_time:.2f}s"
+        assert read_time < read_threshold, f"Read too slow: {read_time:.2f}s"
 
         storage.close()
 
