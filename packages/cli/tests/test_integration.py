@@ -246,7 +246,7 @@ class TestPerformance:
         start = time.perf_counter()
         from packages.cli.src.progress import ProgressIndicator
 
-        progress = ProgressIndicator()
+        ProgressIndicator()
         elapsed = time.perf_counter() - start
 
         # Should be very fast (< 100ms)

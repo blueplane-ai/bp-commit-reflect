@@ -7,7 +7,7 @@ and how they are organized into question sets.
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Optional
 
 
 class QuestionType(str, Enum):
@@ -64,13 +64,13 @@ class Question:
     help_text: Optional[str] = None
     placeholder: Optional[str] = None
     default_value: Optional[Any] = None
-    validation_rules: Optional[Dict[str, Any]] = None
-    options: Optional[List[str]] = None
+    validation_rules: Optional[dict[str, Any]] = None
+    options: Optional[list[str]] = None
     min_value: Optional[int] = None
     max_value: Optional[int] = None
     order: int = 0
     conditional: Optional[Callable[..., bool]] = None
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: Optional[dict[str, Any]] = None
 
     def __post_init__(self):
         """Validate question configuration."""
@@ -96,7 +96,7 @@ class Question:
             if self.min_value >= self.max_value:
                 raise ValueError(f"Question {self.id}: min_value must be less than max_value")
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert question to dictionary for serialization."""
         result = {
             "id": self.id,
@@ -127,7 +127,7 @@ class Question:
         return result
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Question":
+    def from_dict(cls, data: dict[str, Any]) -> "Question":
         """Create question from dictionary representation."""
         # Remove conditional field if present (not serializable)
         data = data.copy()
@@ -209,7 +209,7 @@ class Question:
 
         return True, None
 
-    def should_ask(self, context: Dict[str, Any]) -> bool:
+    def should_ask(self, context: dict[str, Any]) -> bool:
         """
         Determine if this question should be asked based on conditional logic.
 
@@ -236,12 +236,12 @@ class QuestionConfig:
         question_order: Custom ordering of question IDs
     """
 
-    custom_questions: Optional[List[Question]] = None
-    skip_questions: Optional[List[str]] = None
-    additional_questions: Optional[List[Question]] = None
-    question_order: Optional[List[str]] = None
+    custom_questions: Optional[list[Question]] = None
+    skip_questions: Optional[list[str]] = None
+    additional_questions: Optional[list[Question]] = None
+    question_order: Optional[list[str]] = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert config to dictionary for serialization."""
         result = {}
         if self.custom_questions:
@@ -295,16 +295,16 @@ class QuestionSet:
     """
 
     name: str
-    questions: List[Question]
+    questions: list[Question]
     description: Optional[str] = None
     version: str = "1.0"
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: Optional[dict[str, Any]] = None
 
     def __post_init__(self):
         """Sort questions by order."""
         self.questions.sort(key=lambda q: q.order)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert question set to dictionary for serialization."""
         result = {
             "name": self.name,
@@ -318,7 +318,7 @@ class QuestionSet:
         return result
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "QuestionSet":
+    def from_dict(cls, data: dict[str, Any]) -> "QuestionSet":
         """Create question set from dictionary representation."""
         return cls(
             name=data["name"],
@@ -335,7 +335,7 @@ class QuestionSet:
                 return question
         return None
 
-    def get_questions_for_context(self, context: Dict[str, Any]) -> List[Question]:
+    def get_questions_for_context(self, context: dict[str, Any]) -> list[Question]:
         """
         Get questions that should be asked based on context.
 
@@ -343,7 +343,7 @@ class QuestionSet:
         """
         return [q for q in self.questions if q.should_ask(context)]
 
-    def validate_all_answers(self, answers: Dict[str, Any]) -> Dict[str, Optional[str]]:
+    def validate_all_answers(self, answers: dict[str, Any]) -> dict[str, Optional[str]]:
         """
         Validate all answers against their questions.
 

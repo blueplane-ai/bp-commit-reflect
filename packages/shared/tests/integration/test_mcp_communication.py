@@ -154,8 +154,8 @@ class TestMCPCLICommunication:
 
         # Simulate timeout handling
         try:
-            line = await asyncio.wait_for(mock_stdout.readline(), timeout=0.1)
-            assert False, "Should have raised TimeoutError"
+            await asyncio.wait_for(mock_stdout.readline(), timeout=0.1)
+            raise AssertionError("Should have raised TimeoutError")
         except asyncio.TimeoutError:
             # Expected behavior
             assert True

@@ -109,7 +109,7 @@ def run_interactive_mode(args: Namespace) -> int:
 
                 repo_root = get_repository_root()
                 project_name = repo_root.name
-            except:
+            except Exception:
                 project_name = "unknown"
 
         display_welcome(commit_context.commit_hash, project_name)

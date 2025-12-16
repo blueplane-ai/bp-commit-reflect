@@ -114,7 +114,7 @@ class TestMCPCommunication:
 
             # Should handle error gracefully
             try:
-                result = await hook._start_reflection_session(commit_info)
+                await hook._start_reflection_session(commit_info)
             except Exception as e:
                 # Error should be caught and handled
                 assert "Connection" in str(e) or isinstance(e, Exception)

@@ -7,7 +7,7 @@ multiple storage backends.
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Set
+from typing import Optional
 
 from shared.types.storage import StorageBackend
 
@@ -27,9 +27,9 @@ class ConsistencyCheckResult:
 
     is_consistent: bool
     total_records_checked: int
-    inconsistencies: List[Dict]
+    inconsistencies: list[dict]
     timestamp: datetime
-    backends_checked: List[str]
+    backends_checked: list[str]
 
 
 class ConsistencyVerifier:
@@ -42,7 +42,7 @@ class ConsistencyVerifier:
     - Corrupted data
     """
 
-    def __init__(self, backends: List[StorageBackend]):
+    def __init__(self, backends: list[StorageBackend]):
         """
         Initialize verifier with backend list.
 
@@ -140,7 +140,7 @@ class ConsistencyVerifier:
             )
 
         # Get all commit hashes across backends
-        all_hashes: Set[str] = set()
+        all_hashes: set[str] = set()
         for records in backend_records.values():
             all_hashes.update(records.keys())
 
@@ -255,7 +255,7 @@ class ConsistencyVerifier:
 
     def verify_comprehensive(
         self, limit: Optional[int] = None
-    ) -> Dict[str, ConsistencyCheckResult]:
+    ) -> dict[str, ConsistencyCheckResult]:
         """
         Perform all consistency checks.
 
@@ -271,7 +271,7 @@ class ConsistencyVerifier:
             "data_integrity": self.verify_data_integrity(limit=limit),
         }
 
-    def get_summary(self, results: Dict[str, ConsistencyCheckResult]) -> Dict[str, any]:
+    def get_summary(self, results: dict[str, ConsistencyCheckResult]) -> dict[str, any]:
         """
         Get summary of consistency check results.
 

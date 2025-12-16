@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from uuid import UUID
 
 from .reflection import Reflection
@@ -74,7 +74,7 @@ class QueryOptions:
     offset: int = 0
     sort_by: str = "created_at"
     sort_order: SortOrder = SortOrder.DESC
-    filter_by: Optional[Dict[str, Any]] = None
+    filter_by: Optional[dict[str, Any]] = None
     date_from: Optional[datetime] = None
     date_to: Optional[datetime] = None
     project_name: Optional[str] = None
@@ -131,7 +131,7 @@ class StorageBackend(ABC):
     its abstract methods to ensure consistent behavior.
     """
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         """
         Initialize the storage backend.
 
@@ -196,7 +196,7 @@ class StorageBackend(ABC):
         pass
 
     @abstractmethod
-    def query_reflections(self, options: QueryOptions) -> List[Reflection]:
+    def query_reflections(self, options: QueryOptions) -> list[Reflection]:
         """
         Query reflections based on options.
 
@@ -225,7 +225,7 @@ class StorageBackend(ABC):
         pass
 
     @abstractmethod
-    def count_reflections(self, filter_by: Optional[Dict[str, Any]] = None) -> int:
+    def count_reflections(self, filter_by: Optional[dict[str, Any]] = None) -> int:
         """
         Count reflections matching optional filters.
 
@@ -295,7 +295,7 @@ class StorageBackend(ABC):
 
     def get_recent_reflections(
         self, limit: int = 10, project_name: Optional[str] = None
-    ) -> List[Reflection]:
+    ) -> list[Reflection]:
         """
         Get the most recent reflections.
 
@@ -314,7 +314,7 @@ class StorageBackend(ABC):
         )
         return self.query_reflections(options)
 
-    def get_reflections_by_commit(self, commit_hash: str) -> List[Reflection]:
+    def get_reflections_by_commit(self, commit_hash: str) -> list[Reflection]:
         """
         Get all reflections for a specific commit.
 
@@ -333,7 +333,7 @@ class StorageBackend(ABC):
 
     def get_reflections_by_date_range(
         self, date_from: datetime, date_to: datetime, project_name: Optional[str] = None
-    ) -> List[Reflection]:
+    ) -> list[Reflection]:
         """
         Get reflections within a date range.
 
@@ -362,7 +362,7 @@ class MultiBackendStorage:
     Manages writing to multiple backends and reading with fallback logic.
     """
 
-    def __init__(self, backends: List[StorageBackend]):
+    def __init__(self, backends: list[StorageBackend]):
         """
         Initialize multi-backend storage.
 
@@ -371,7 +371,7 @@ class MultiBackendStorage:
         """
         self.backends = backends
 
-    def initialize_all(self) -> Dict[str, StorageResult]:
+    def initialize_all(self) -> dict[str, StorageResult]:
         """
         Initialize all backends.
 
@@ -384,7 +384,7 @@ class MultiBackendStorage:
             results[backend_name] = backend.initialize()
         return results
 
-    def save_to_all(self, reflection: Reflection) -> Dict[str, StorageResult]:
+    def save_to_all(self, reflection: Reflection) -> dict[str, StorageResult]:
         """
         Save reflection to all backends.
 
@@ -426,7 +426,7 @@ class MultiBackendStorage:
                 continue  # Try next backend
         return None
 
-    def close_all(self) -> Dict[str, StorageResult]:
+    def close_all(self) -> dict[str, StorageResult]:
         """
         Close all backends.
 

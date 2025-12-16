@@ -174,7 +174,7 @@ class DataMigrator:
 
         # Compare data integrity
         data_matches = 0
-        for src, dst in zip(source_samples, dest_samples):
+        for src, dst in zip(source_samples, dest_samples, strict=False):
             if self._records_match(src, dst):
                 data_matches += 1
 

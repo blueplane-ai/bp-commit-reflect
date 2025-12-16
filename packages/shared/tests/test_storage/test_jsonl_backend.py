@@ -177,7 +177,7 @@ class TestJSONLStorage:
 
         # File should have both entries, not be corrupted
         with open(jsonl_path) as f:
-            lines = [l for l in f if l.strip()]
+            lines = [line for line in f if line.strip()]
             assert len(lines) == 2
 
     def test_jsonl_storage_handles_invalid_json_gracefully(self, tmp_path):

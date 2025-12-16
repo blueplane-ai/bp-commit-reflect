@@ -8,7 +8,6 @@ for storage backend instances.
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Dict, List
 
 from shared.types.storage import StorageBackend
 
@@ -40,7 +39,7 @@ class HealthCheckResult:
     backend_type: str
     message: str
     timestamp: datetime
-    details: Dict
+    details: dict
     latency_ms: float
 
 
@@ -231,7 +230,7 @@ class StorageHealthChecker:
                 latency_ms=latency,
             )
 
-    def check_comprehensive(self) -> Dict[str, HealthCheckResult]:
+    def check_comprehensive(self) -> dict[str, HealthCheckResult]:
         """
         Perform all health checks.
 
@@ -252,7 +251,7 @@ class MultiBackendHealthMonitor:
     Provides aggregate health status and identifies degraded backends.
     """
 
-    def __init__(self, backends: List[StorageBackend]):
+    def __init__(self, backends: list[StorageBackend]):
         """
         Initialize monitor with backend list.
 
@@ -262,7 +261,7 @@ class MultiBackendHealthMonitor:
         self.backends = backends
         self.checkers = [StorageHealthChecker(backend) for backend in backends]
 
-    def check_all(self) -> Dict[str, HealthCheckResult]:
+    def check_all(self) -> dict[str, HealthCheckResult]:
         """
         Check health of all backends.
 
@@ -277,7 +276,7 @@ class MultiBackendHealthMonitor:
 
         return results
 
-    def check_comprehensive_all(self) -> Dict[str, Dict[str, HealthCheckResult]]:
+    def check_comprehensive_all(self) -> dict[str, dict[str, HealthCheckResult]]:
         """
         Perform comprehensive checks on all backends.
 
@@ -316,7 +315,7 @@ class MultiBackendHealthMonitor:
         else:
             return HealthStatus.UNKNOWN
 
-    def get_unhealthy_backends(self) -> List[str]:
+    def get_unhealthy_backends(self) -> list[str]:
         """
         Get list of unhealthy backend types.
 
@@ -331,7 +330,7 @@ class MultiBackendHealthMonitor:
             if result.status == HealthStatus.UNHEALTHY
         ]
 
-    def get_healthy_backends(self) -> List[str]:
+    def get_healthy_backends(self) -> list[str]:
         """
         Get list of healthy backend types.
 

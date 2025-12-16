@@ -10,7 +10,7 @@ import sqlite3
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from uuid import UUID
 
 from shared.types.reflection import Reflection
@@ -36,7 +36,7 @@ class SQLiteStorage(BaseStorageBackend):
     Provides persistent, queryable storage with indices for performance.
     """
 
-    def __init__(self, config: Dict[str, Any] | str):
+    def __init__(self, config: dict[str, Any] | str):
         """
         Initialize SQLite storage backend.
 
@@ -78,7 +78,7 @@ class SQLiteStorage(BaseStorageBackend):
             conn.execute("PRAGMA foreign_keys = ON")
             yield conn
         except sqlite3.Error as e:
-            raise StorageConnectionError(f"Failed to connect to database: {e}")
+            raise StorageConnectionError(f"Failed to connect to database: {e}") from e
         finally:
             if conn:
                 conn.close()
@@ -459,7 +459,7 @@ class SQLiteStorage(BaseStorageBackend):
             return StorageResult.success_result("Reflection saved successfully")
 
         except Exception as e:
-            raise StorageWriteError(f"Failed to save reflection: {e}")
+            raise StorageWriteError(f"Failed to save reflection: {e}") from e
 
     def get_reflection(self, reflection_id: UUID) -> Optional[Reflection]:
         """
@@ -492,9 +492,9 @@ class SQLiteStorage(BaseStorageBackend):
                 return self._row_to_reflection(row, answer_rows)
 
         except Exception as e:
-            raise StorageReadError(f"Failed to get reflection: {e}")
+            raise StorageReadError(f"Failed to get reflection: {e}") from e
 
-    def query_reflections(self, options: QueryOptions) -> List[Reflection]:
+    def query_reflections(self, options: QueryOptions) -> list[Reflection]:
         """
         Query reflections based on options.
 
@@ -572,7 +572,7 @@ class SQLiteStorage(BaseStorageBackend):
                 return reflections
 
         except Exception as e:
-            raise StorageReadError(f"Failed to query reflections: {e}")
+            raise StorageReadError(f"Failed to query reflections: {e}") from e
 
     def delete_reflection(self, reflection_id: UUID) -> StorageResult:
         """
@@ -599,9 +599,9 @@ class SQLiteStorage(BaseStorageBackend):
             return StorageResult.success_result("Reflection deleted successfully")
 
         except Exception as e:
-            raise StorageWriteError(f"Failed to delete reflection: {e}")
+            raise StorageWriteError(f"Failed to delete reflection: {e}") from e
 
-    def count_reflections(self, filter_by: Optional[Dict[str, Any]] = None) -> int:
+    def count_reflections(self, filter_by: Optional[dict[str, Any]] = None) -> int:
         """
         Count reflections matching optional filters.
 
@@ -629,7 +629,7 @@ class SQLiteStorage(BaseStorageBackend):
                 return count
 
         except Exception as e:
-            raise StorageReadError(f"Failed to count reflections: {e}")
+            raise StorageReadError(f"Failed to count reflections: {e}") from e
 
     def health_check(self) -> StorageResult:
         """
@@ -652,7 +652,7 @@ class SQLiteStorage(BaseStorageBackend):
             return StorageResult.error_result(f"SQLite storage is unhealthy: {e}", error=e)
 
     def _row_to_reflection(
-        self, row: sqlite3.Row, answer_rows: List[sqlite3.Row]
+        self, row: sqlite3.Row, answer_rows: list[sqlite3.Row]
     ) -> Optional[Reflection]:
         """
         Convert database row to Reflection object.
@@ -724,10 +724,10 @@ class SQLiteStorage(BaseStorageBackend):
             return reflection
 
         except Exception as e:
-            raise StorageReadError(f"Failed to convert row to reflection: {e}")
+            raise StorageReadError(f"Failed to convert row to reflection: {e}") from e
 
     # Legacy interface methods (for compatibility with old StorageBackend)
-    def write(self, reflection: Dict[str, Any]) -> bool:
+    def write(self, reflection: dict[str, Any]) -> bool:
         """
         Write a reflection to storage (legacy interface).
 
@@ -756,7 +756,7 @@ class SQLiteStorage(BaseStorageBackend):
 
     def read_recent(
         self, limit: int = 10, project: Optional[str] = None, since: Optional[datetime] = None
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Read recent reflections from storage (legacy interface).
 

@@ -8,7 +8,7 @@ storage backends, session settings, and MCP server configuration.
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from .question import QuestionConfig
 
@@ -38,7 +38,7 @@ class StorageConfig:
     enabled: bool = True
     priority: int = 0
     path: Optional[str] = None
-    options: Optional[Dict[str, Any]] = None
+    options: Optional[dict[str, Any]] = None
 
     def __post_init__(self):
         """Validate and normalize configuration."""
@@ -57,7 +57,7 @@ class StorageConfig:
         if self.options is None:
             self.options = {}
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert config to dictionary for serialization."""
         result = {
             "backend_type": self.backend_type.value,
@@ -71,7 +71,7 @@ class StorageConfig:
         return result
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "StorageConfig":
+    def from_dict(cls, data: dict[str, Any]) -> "StorageConfig":
         """Create config from dictionary representation."""
         return cls(
             backend_type=StorageBackendType(data["backend_type"]),
@@ -109,7 +109,7 @@ class SessionConfig:
     show_commit_diff: bool = False
     confirm_before_complete: bool = True
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert config to dictionary for serialization."""
         return {
             "timeout": self.timeout,
@@ -121,7 +121,7 @@ class SessionConfig:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "SessionConfig":
+    def from_dict(cls, data: dict[str, Any]) -> "SessionConfig":
         """Create config from dictionary representation."""
         return cls(
             timeout=data.get("timeout"),
@@ -154,7 +154,7 @@ class MCPConfig:
     session_cleanup_interval: int = 300
     process_timeout: int = 600
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert config to dictionary for serialization."""
         return {
             "enabled": self.enabled,
@@ -166,7 +166,7 @@ class MCPConfig:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "MCPConfig":
+    def from_dict(cls, data: dict[str, Any]) -> "MCPConfig":
         """Create config from dictionary representation."""
         return cls(
             enabled=data.get("enabled", False),
@@ -195,11 +195,11 @@ class Config:
     """
 
     project_name: Optional[str] = None
-    storage_backends: List[StorageConfig] = field(default_factory=list)
+    storage_backends: list[StorageConfig] = field(default_factory=list)
     session: SessionConfig = field(default_factory=SessionConfig)
     questions: Optional[QuestionConfig] = None
     mcp: MCPConfig = field(default_factory=MCPConfig)
-    environment: Optional[Dict[str, Any]] = None
+    environment: Optional[dict[str, Any]] = None
 
     def __post_init__(self):
         """Initialize defaults and validate configuration."""
@@ -219,7 +219,7 @@ class Config:
             self.mcp = MCPConfig()
 
     @staticmethod
-    def _default_storage_backends() -> List[StorageConfig]:
+    def _default_storage_backends() -> list[StorageConfig]:
         """Get default storage backend configurations."""
         return [
             StorageConfig(
@@ -235,7 +235,7 @@ class Config:
             ),
         ]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert config to dictionary for serialization."""
         result = {
             "storage_backends": [b.to_dict() for b in self.storage_backends],
@@ -251,7 +251,7 @@ class Config:
         return result
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Config":
+    def from_dict(cls, data: dict[str, Any]) -> "Config":
         """Create config from dictionary representation."""
         return cls(
             project_name=data.get("project_name"),
@@ -262,7 +262,7 @@ class Config:
             environment=data.get("environment"),
         )
 
-    def get_enabled_storage_backends(self) -> List[StorageConfig]:
+    def get_enabled_storage_backends(self) -> list[StorageConfig]:
         """Get list of enabled storage backends sorted by priority."""
         return [b for b in self.storage_backends if b.enabled]
 
@@ -273,7 +273,7 @@ class Config:
                 return backend
         return None
 
-    def validate(self) -> List[str]:
+    def validate(self) -> list[str]:
         """
         Validate the configuration.
 
@@ -334,9 +334,9 @@ class Config:
                 data = json.load(f)
             return cls.from_dict(data)
         except json.JSONDecodeError as e:
-            raise ValueError(f"Invalid JSON in config file: {e}")
+            raise ValueError(f"Invalid JSON in config file: {e}") from e
         except Exception as e:
-            raise ValueError(f"Error loading config: {e}")
+            raise ValueError(f"Error loading config: {e}") from e
 
     def save_to_file(self, path: Path) -> None:
         """

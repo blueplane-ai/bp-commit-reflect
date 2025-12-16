@@ -53,7 +53,7 @@ class TestSessionLifecycle:
             # Simulate answering questions
             questions = minimal_config["questions"]
 
-            for i, question in enumerate(questions):
+            for i, _question in enumerate(questions):
                 session.current_question_index = i
                 session.update_activity()
                 # In real implementation, answers would be stored

@@ -86,7 +86,7 @@ def get_current_branch(cwd: Path | None = None) -> str:
             commit_hash = run_git_command(["rev-parse", "HEAD"], cwd=cwd)
             return f"detached-{commit_hash[:8]}"
         except GitError:
-            raise e
+            raise e from None
 
 
 def get_repository_root(cwd: Path | None = None) -> Path:

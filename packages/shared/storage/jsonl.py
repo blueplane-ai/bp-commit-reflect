@@ -6,7 +6,7 @@ import os
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from .base import StorageBackend
 
@@ -53,7 +53,7 @@ class JSONLStorage(StorageBackend):
         finally:
             fcntl.flock(file_handle.fileno(), fcntl.LOCK_UN)
 
-    def write(self, reflection: Dict[str, Any]) -> bool:
+    def write(self, reflection: dict[str, Any]) -> bool:
         """
         Write a reflection to the JSONL file atomically.
 
@@ -105,13 +105,13 @@ class JSONLStorage(StorageBackend):
             if temp_path.exists():
                 try:
                     temp_path.unlink()
-                except:
+                except Exception:
                     pass
             return False
 
     def read_recent(
         self, limit: int = 10, project: Optional[str] = None, since: Optional[datetime] = None
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Read recent reflections from the JSONL file.
 
@@ -168,7 +168,7 @@ class JSONLStorage(StorageBackend):
             print(f"Error reading from JSONL: {e}")
             return []
 
-    def read_all(self) -> List[Dict[str, Any]]:
+    def read_all(self) -> list[dict[str, Any]]:
         """
         Read all reflections from the JSONL file.
 
