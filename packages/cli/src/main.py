@@ -3,7 +3,16 @@
 import argparse
 import asyncio
 import sys
+from importlib.metadata import version, PackageNotFoundError
 from pathlib import Path
+
+
+def get_version() -> str:
+    """Get package version from metadata or fallback."""
+    try:
+        return version("commit-reflect")
+    except PackageNotFoundError:
+        return "0.1.0"  # Fallback for development
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -16,6 +25,10 @@ def create_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="commit-reflect",
         description="Capture reflections and AI synergy assessments at commit time",
+    )
+
+    parser.add_argument(
+        "--version", "-V", action="version", version=f"%(prog)s {get_version()}"
     )
 
     # Create subparsers for commands
