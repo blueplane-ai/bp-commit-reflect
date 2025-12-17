@@ -2,7 +2,10 @@
 
 from abc import ABC, abstractmethod
 from datetime import datetime
+from types import TracebackType
 from typing import Any, Optional
+
+from typing_extensions import Self
 
 
 class StorageBackend(ABC):
@@ -43,10 +46,15 @@ class StorageBackend(ABC):
         """Close the storage backend and clean up resources."""
         pass
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         """Context manager entry."""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Context manager exit."""
         self.close()

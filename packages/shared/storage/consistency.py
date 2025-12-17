@@ -7,7 +7,7 @@ multiple storage backends.
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Any, Optional
 
 from shared.types.storage import StorageBackend
 
@@ -271,7 +271,7 @@ class ConsistencyVerifier:
             "data_integrity": self.verify_data_integrity(limit=limit),
         }
 
-    def get_summary(self, results: dict[str, ConsistencyCheckResult]) -> dict[str, any]:
+    def get_summary(self, results: dict[str, ConsistencyCheckResult]) -> dict[str, Any]:
         """
         Get summary of consistency check results.
 

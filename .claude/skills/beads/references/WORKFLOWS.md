@@ -545,4 +545,3 @@ Research or investigation work:
 2. Use bd ready to focus on unblocked work
 3. Consider closing old issues that no longer matter
 4. Use labels for organization
-

@@ -3,10 +3,11 @@
 import json
 import os
 import sys
+from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import IO, Any, Optional
 
 from .base import StorageBackend
 
@@ -18,7 +19,7 @@ if sys.platform == "win32":
     LOCK_EX = msvcrt.LK_NBLCK  # Exclusive lock
     LOCK_UN = None  # Unlock marker
 
-    def _lock(file_handle, operation):
+    def _lock(file_handle: IO[Any], operation: int | None) -> None:
         if operation == LOCK_UN:
             msvcrt.locking(file_handle.fileno(), msvcrt.LK_UNLCK, 1)
         else:
@@ -28,7 +29,7 @@ if sys.platform == "win32":
                 # If lock fails, continue anyway (best effort)
                 pass
 
-    def _unlock(file_handle):
+    def _unlock(file_handle: IO[Any]) -> None:
         try:
             msvcrt.locking(file_handle.fileno(), msvcrt.LK_UNLCK, 1)
         except OSError:
@@ -41,10 +42,10 @@ else:
     LOCK_EX = fcntl.LOCK_EX
     LOCK_UN = fcntl.LOCK_UN
 
-    def _lock(file_handle, operation):
+    def _lock(file_handle: IO[Any], operation: int | None) -> None:
         fcntl.flock(file_handle.fileno(), operation)
 
-    def _unlock(file_handle):
+    def _unlock(file_handle: IO[Any]) -> None:
         fcntl.flock(file_handle.fileno(), fcntl.LOCK_UN)
 
 
@@ -76,7 +77,9 @@ class JSONLStorage(StorageBackend):
             self.filepath.touch()
 
     @contextmanager
-    def _lock_file(self, file_handle, operation):
+    def _lock_file(
+        self, file_handle: IO[Any], operation: int | None
+    ) -> Generator[None, None, None]:
         """
         Context manager for file locking.
 
@@ -212,7 +215,7 @@ class JSONLStorage(StorageBackend):
         Returns:
             List of all reflection dictionaries
         """
-        return self.read_recent(limit=float("inf"))
+        return self.read_recent(limit=2**31 - 1)  # Max int for practical purposes
 
     def close(self) -> None:
         """Close the storage backend (no-op for JSONL)."""

@@ -40,7 +40,7 @@ class StorageConfig:
     path: Optional[str] = None
     options: Optional[dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate and normalize configuration."""
         if isinstance(self.backend_type, str):
             self.backend_type = StorageBackendType(self.backend_type)
@@ -201,7 +201,7 @@ class Config:
     mcp: MCPConfig = field(default_factory=MCPConfig)
     environment: Optional[dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize defaults and validate configuration."""
         # If no storage backends configured, use defaults
         if not self.storage_backends:

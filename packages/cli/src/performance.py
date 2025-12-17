@@ -104,10 +104,14 @@ class PerformanceMonitor:
         Returns:
             Performance report dictionary
         """
-        report = {"operations": {}, "recent_operations": list(self.recent_operations)}
-
+        operations: dict[str, dict[str, float]] = {}
         for operation_name in self.metrics:
-            report["operations"][operation_name] = self.get_stats(operation_name)
+            operations[operation_name] = self.get_stats(operation_name)
+
+        report: dict[str, Any] = {
+            "operations": operations,
+            "recent_operations": list(self.recent_operations),
+        }
 
         return report
 

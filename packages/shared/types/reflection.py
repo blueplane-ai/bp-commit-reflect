@@ -140,7 +140,7 @@ class SessionMetadata:
     interrupted: bool = False
     additional_context: Optional[dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Ensure session_id is a UUID."""
         if isinstance(self.session_id, str):
             self.session_id = UUID(self.session_id)
@@ -205,7 +205,7 @@ class Reflection:
     created_at: datetime
     updated_at: datetime
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize defaults and ensure types."""
         if self.id is None:
             self.id = uuid4()
