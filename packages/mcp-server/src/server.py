@@ -98,7 +98,9 @@ class MCPReflectionServer:
 
         for sig in (signal.SIGTERM, signal.SIGINT):
             loop.add_signal_handler(
-                sig, lambda s=sig: asyncio.create_task(self._handle_shutdown_signal(s))
+                sig,
+                lambda s: asyncio.create_task(self._handle_shutdown_signal(s)),
+                sig,
             )
 
     async def _handle_shutdown_signal(self, sig):

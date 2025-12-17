@@ -7,6 +7,7 @@ indices, migrations, and connection pooling.
 
 import json
 import sqlite3
+from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
@@ -60,7 +61,7 @@ class SQLiteStorage(BaseStorageBackend):
         return self._initialized
 
     @contextmanager
-    def get_connection(self):
+    def get_connection(self) -> Generator[sqlite3.Connection, None, None]:
         """
         Get a database connection with proper resource management.
 
@@ -130,7 +131,7 @@ class SQLiteStorage(BaseStorageBackend):
         except Exception as e:
             return StorageResult.error_result(f"Failed to initialize SQLite storage: {e}", error=e)
 
-    def _apply_migrations(self, conn: sqlite3.Connection, from_version: int):
+    def _apply_migrations(self, conn: sqlite3.Connection, from_version: int) -> None:
         """
         Apply database migrations from current version to latest.
 
@@ -624,7 +625,7 @@ class SQLiteStorage(BaseStorageBackend):
                         params.append(value)
 
                 cursor.execute(query, params)
-                count = cursor.fetchone()[0]
+                count: int = cursor.fetchone()[0]
 
                 return count
 
@@ -665,7 +666,11 @@ class SQLiteStorage(BaseStorageBackend):
             Reflection object or None if conversion fails
         """
         try:
-            from ..types.reflection import CommitContext, ReflectionAnswer, SessionMetadata
+            from ..types.reflection import (
+                CommitContext,
+                ReflectionAnswer,
+                SessionMetadata,
+            )
 
             # Parse answers
             answers = []
@@ -749,7 +754,7 @@ class SQLiteStorage(BaseStorageBackend):
 
             # Save using new interface
             result = self.save_reflection(reflection_obj)
-            return result.success
+            return bool(result.success)
 
         except Exception:
             return False

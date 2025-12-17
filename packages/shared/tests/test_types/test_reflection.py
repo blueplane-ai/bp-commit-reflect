@@ -10,7 +10,12 @@ Tests the core Reflection data model including:
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
-from shared.types.reflection import CommitContext, Reflection, ReflectionAnswer, SessionMetadata
+from shared.types.reflection import (
+    CommitContext,
+    Reflection,
+    ReflectionAnswer,
+    SessionMetadata,
+)
 
 
 class TestCommitContext:

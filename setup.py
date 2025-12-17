@@ -4,8 +4,9 @@ Setup configuration for commit-reflect package.
 This is the main package that users will install via pip.
 """
 
-from setuptools import setup, find_packages
 from pathlib import Path
+
+from setuptools import find_packages, setup
 
 # Read long description from README
 readme_file = Path(__file__).parent / "README.md"

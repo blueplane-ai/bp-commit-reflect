@@ -81,7 +81,7 @@ class QueryOptions:
     branch: Optional[str] = None
     author_email: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate query options."""
         if isinstance(self.sort_order, str):
             self.sort_order = SortOrder(self.sort_order)

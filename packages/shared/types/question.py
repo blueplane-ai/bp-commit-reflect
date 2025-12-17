@@ -72,7 +72,7 @@ class Question:
     conditional: Optional[Callable[..., bool]] = None
     metadata: Optional[dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate question configuration."""
         # Validate required fields
         if not self.id or not self.id.strip():
@@ -255,7 +255,7 @@ class QuestionConfig:
         return result
 
     @classmethod
-    def from_dict(cls, data) -> "QuestionConfig":
+    def from_dict(cls, data: dict[str, Any] | list[dict[str, Any]]) -> "QuestionConfig":
         """Create config from dictionary representation.
 
         Supports both dict format and list format (legacy):
@@ -300,7 +300,7 @@ class QuestionSet:
     version: str = "1.0"
     metadata: Optional[dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Sort questions by order."""
         self.questions.sort(key=lambda q: q.order)
 
