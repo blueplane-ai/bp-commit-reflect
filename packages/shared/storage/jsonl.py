@@ -2,13 +2,50 @@
 
 import json
 import os
-import fcntl
-from pathlib import Path
-from typing import List, Dict, Any, Optional
-from datetime import datetime
+import sys
 from contextlib import contextmanager
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Optional
 
 from .base import StorageBackend
+
+# Cross-platform file locking
+if sys.platform == "win32":
+    import msvcrt
+
+    LOCK_SH = 0  # Shared lock (not supported on Windows, will use exclusive)
+    LOCK_EX = msvcrt.LK_NBLCK  # Exclusive lock
+    LOCK_UN = None  # Unlock marker
+
+    def _lock(file_handle, operation):
+        if operation == LOCK_UN:
+            msvcrt.locking(file_handle.fileno(), msvcrt.LK_UNLCK, 1)
+        else:
+            try:
+                msvcrt.locking(file_handle.fileno(), msvcrt.LK_NBLCK, 1)
+            except OSError:
+                # If lock fails, continue anyway (best effort)
+                pass
+
+    def _unlock(file_handle):
+        try:
+            msvcrt.locking(file_handle.fileno(), msvcrt.LK_UNLCK, 1)
+        except OSError:
+            pass
+
+else:
+    import fcntl
+
+    LOCK_SH = fcntl.LOCK_SH
+    LOCK_EX = fcntl.LOCK_EX
+    LOCK_UN = fcntl.LOCK_UN
+
+    def _lock(file_handle, operation):
+        fcntl.flock(file_handle.fileno(), operation)
+
+    def _unlock(file_handle):
+        fcntl.flock(file_handle.fileno(), fcntl.LOCK_UN)
 
 
 class JSONLStorage(StorageBackend):
@@ -45,15 +82,15 @@ class JSONLStorage(StorageBackend):
 
         Args:
             file_handle: Open file handle
-            operation: fcntl lock operation (LOCK_SH or LOCK_EX)
+            operation: Lock operation (LOCK_SH or LOCK_EX)
         """
         try:
-            fcntl.flock(file_handle.fileno(), operation)
+            _lock(file_handle, operation)
             yield
         finally:
-            fcntl.flock(file_handle.fileno(), fcntl.LOCK_UN)
+            _unlock(file_handle)
 
-    def write(self, reflection: Dict[str, Any]) -> bool:
+    def write(self, reflection: dict[str, Any]) -> bool:
         """
         Write a reflection to the JSONL file atomically.
 
@@ -77,13 +114,13 @@ class JSONLStorage(StorageBackend):
             # Read existing content with shared lock
             existing_lines = []
             if self.filepath.exists() and self.filepath.stat().st_size > 0:
-                with open(self.filepath, "r", encoding="utf-8") as f:
-                    with self._lock_file(f, fcntl.LOCK_SH):
+                with open(self.filepath, encoding="utf-8") as f:
+                    with self._lock_file(f, LOCK_SH):
                         existing_lines = f.readlines()
 
             # Write all content to temporary file with exclusive lock
             with open(temp_path, "w", encoding="utf-8") as f:
-                with self._lock_file(f, fcntl.LOCK_EX):
+                with self._lock_file(f, LOCK_EX):
                     # Write existing lines
                     for line in existing_lines:
                         f.write(line)
@@ -105,16 +142,13 @@ class JSONLStorage(StorageBackend):
             if temp_path.exists():
                 try:
                     temp_path.unlink()
-                except:
+                except Exception:
                     pass
             return False
 
     def read_recent(
-        self,
-        limit: int = 10,
-        project: Optional[str] = None,
-        since: Optional[datetime] = None
-    ) -> List[Dict[str, Any]]:
+        self, limit: int = 10, project: Optional[str] = None, since: Optional[datetime] = None
+    ) -> list[dict[str, Any]]:
         """
         Read recent reflections from the JSONL file.
 
@@ -132,8 +166,8 @@ class JSONLStorage(StorageBackend):
         reflections = []
 
         try:
-            with open(self.filepath, "r", encoding="utf-8") as f:
-                with self._lock_file(f, fcntl.LOCK_SH):
+            with open(self.filepath, encoding="utf-8") as f:
+                with self._lock_file(f, LOCK_SH):
                     for line in f:
                         line = line.strip()
                         if not line:
@@ -171,14 +205,14 @@ class JSONLStorage(StorageBackend):
             print(f"Error reading from JSONL: {e}")
             return []
 
-    def read_all(self) -> List[Dict[str, Any]]:
+    def read_all(self) -> list[dict[str, Any]]:
         """
         Read all reflections from the JSONL file.
 
         Returns:
             List of all reflection dictionaries
         """
-        return self.read_recent(limit=float('inf'))
+        return self.read_recent(limit=float("inf"))
 
     def close(self) -> None:
         """Close the storage backend (no-op for JSONL)."""

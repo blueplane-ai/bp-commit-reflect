@@ -1,10 +1,11 @@
 """Performance optimization utilities."""
 
-import time
 import functools
-from typing import Callable, Any, Dict
+import time
 from collections import deque
+from collections.abc import Callable
 from datetime import datetime, timedelta
+from typing import Any
 
 
 class PerformanceMonitor:
@@ -27,6 +28,7 @@ class PerformanceMonitor:
         Returns:
             Decorated function
         """
+
         def decorator(func: Callable) -> Callable:
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
@@ -43,15 +45,18 @@ class PerformanceMonitor:
                 self.metrics[operation_name].append(duration_ms)
 
                 # Record recent operation
-                self.recent_operations.append({
-                    "operation": operation_name,
-                    "duration_ms": duration_ms,
-                    "timestamp": datetime.utcnow().isoformat() + "Z"
-                })
+                self.recent_operations.append(
+                    {
+                        "operation": operation_name,
+                        "duration_ms": duration_ms,
+                        "timestamp": datetime.utcnow().isoformat() + "Z",
+                    }
+                )
 
                 return result
 
             return wrapper
+
         return decorator
 
     def get_average_duration(self, operation_name: str) -> float:
@@ -70,7 +75,7 @@ class PerformanceMonitor:
 
         return sum(durations) / len(durations)
 
-    def get_stats(self, operation_name: str) -> Dict[str, Any]:
+    def get_stats(self, operation_name: str) -> dict[str, Any]:
         """
         Get detailed statistics for an operation.
 
@@ -82,32 +87,24 @@ class PerformanceMonitor:
         """
         durations = self.metrics.get(operation_name, [])
         if not durations:
-            return {
-                "count": 0,
-                "average": 0,
-                "min": 0,
-                "max": 0
-            }
+            return {"count": 0, "average": 0, "min": 0, "max": 0}
 
         return {
             "count": len(durations),
             "average": sum(durations) / len(durations),
             "min": min(durations),
             "max": max(durations),
-            "total": sum(durations)
+            "total": sum(durations),
         }
 
-    def report(self) -> Dict[str, Any]:
+    def report(self) -> dict[str, Any]:
         """
         Generate performance report.
 
         Returns:
             Performance report dictionary
         """
-        report = {
-            "operations": {},
-            "recent_operations": list(self.recent_operations)
-        }
+        report = {"operations": {}, "recent_operations": list(self.recent_operations)}
 
         for operation_name in self.metrics:
             report["operations"][operation_name] = self.get_stats(operation_name)
@@ -161,10 +158,7 @@ class CacheManager:
             key: Cache key
             value: Value to cache
         """
-        self.cache[key] = {
-            "value": value,
-            "timestamp": datetime.utcnow()
-        }
+        self.cache[key] = {"value": value, "timestamp": datetime.utcnow()}
 
     def clear(self) -> None:
         """Clear all cache entries."""
@@ -208,7 +202,7 @@ def timed(operation_name: str) -> Callable:
     return _monitor.time_operation(operation_name)
 
 
-def get_performance_report() -> Dict[str, Any]:
+def get_performance_report() -> dict[str, Any]:
     """
     Get global performance report.
 

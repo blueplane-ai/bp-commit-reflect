@@ -5,7 +5,6 @@ Tests the storage backend interface and contracts.
 """
 
 import pytest
-from abc import ABC
 from shared.types.storage import StorageBackend, StorageError
 
 
@@ -30,8 +29,8 @@ class TestStorageBackendInterface:
 
     def test_storage_backend_complete_implementation(self):
         """Test that complete implementation can be instantiated."""
-        from shared.types.storage import StorageResult, QueryOptions
-        from uuid import UUID
+
+        from shared.types.storage import StorageResult
 
         class CompleteBackend(StorageBackend):
             """Complete backend with all required methods."""
@@ -76,8 +75,8 @@ class TestStorageError:
         """Test storage error with underlying cause."""
         try:
             try:
-                raise IOError("Disk full")
-            except IOError as e:
+                raise OSError("Disk full")
+            except OSError as e:
                 raise StorageError("Failed to write") from e
         except StorageError as error:
             assert "Failed to write" in str(error)

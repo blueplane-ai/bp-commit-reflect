@@ -7,7 +7,7 @@ representing commit reflections, including answers, context, and metadata.
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import Any, Optional
 from uuid import UUID, uuid4
 
 
@@ -23,13 +23,14 @@ class ReflectionAnswer:
         answered_at: Timestamp when the answer was provided
         metadata: Optional metadata about the answer (e.g., time to answer)
     """
+
     question_id: str
     question_text: str
     answer: str
     answered_at: datetime
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: Optional[dict[str, Any]] = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert answer to dictionary for serialization."""
         result = {
             "question_id": self.question_id,
@@ -42,7 +43,7 @@ class ReflectionAnswer:
         return result
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ReflectionAnswer":
+    def from_dict(cls, data: dict[str, Any]) -> "ReflectionAnswer":
         """Create answer from dictionary representation."""
         return cls(
             question_id=data["question_id"],
@@ -70,6 +71,7 @@ class CommitContext:
         deletions: Number of line deletions
         changed_files: List of file paths that were changed
     """
+
     commit_hash: str
     commit_message: str
     branch: str
@@ -79,9 +81,9 @@ class CommitContext:
     files_changed: int = 0
     insertions: int = 0
     deletions: int = 0
-    changed_files: List[str] = field(default_factory=list)
+    changed_files: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert context to dictionary for serialization."""
         return {
             "commit_hash": self.commit_hash,
@@ -97,7 +99,7 @@ class CommitContext:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "CommitContext":
+    def from_dict(cls, data: dict[str, Any]) -> "CommitContext":
         """Create context from dictionary representation."""
         return cls(
             commit_hash=data["commit_hash"],
@@ -128,6 +130,7 @@ class SessionMetadata:
         interrupted: Whether the session was interrupted before completion
         additional_context: Any additional context provided
     """
+
     session_id: UUID
     started_at: datetime
     completed_at: Optional[datetime] = None
@@ -135,14 +138,14 @@ class SessionMetadata:
     tool_version: Optional[str] = None
     environment: Optional[str] = None
     interrupted: bool = False
-    additional_context: Optional[Dict[str, Any]] = None
+    additional_context: Optional[dict[str, Any]] = None
 
     def __post_init__(self):
         """Ensure session_id is a UUID."""
         if isinstance(self.session_id, str):
             self.session_id = UUID(self.session_id)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert metadata to dictionary for serialization."""
         result = {
             "session_id": str(self.session_id),
@@ -162,13 +165,14 @@ class SessionMetadata:
         return result
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "SessionMetadata":
+    def from_dict(cls, data: dict[str, Any]) -> "SessionMetadata":
         """Create metadata from dictionary representation."""
         return cls(
             session_id=UUID(data["session_id"]),
             started_at=datetime.fromisoformat(data["started_at"]),
-            completed_at=datetime.fromisoformat(data["completed_at"])
-                if data.get("completed_at") else None,
+            completed_at=(
+                datetime.fromisoformat(data["completed_at"]) if data.get("completed_at") else None
+            ),
             project_name=data.get("project_name"),
             tool_version=data.get("tool_version"),
             environment=data.get("environment"),
@@ -193,8 +197,9 @@ class Reflection:
         created_at: When the reflection was created
         updated_at: When the reflection was last updated
     """
+
     id: UUID
-    answers: List[ReflectionAnswer]
+    answers: list[ReflectionAnswer]
     commit_context: CommitContext
     session_metadata: SessionMetadata
     created_at: datetime
@@ -213,7 +218,7 @@ class Reflection:
         if self.updated_at is None:
             self.updated_at = self.created_at
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert reflection to dictionary for serialization."""
         return {
             "id": str(self.id),
@@ -225,7 +230,7 @@ class Reflection:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Reflection":
+    def from_dict(cls, data: dict[str, Any]) -> "Reflection":
         """Create reflection from dictionary representation."""
         return cls(
             id=UUID(data["id"]),

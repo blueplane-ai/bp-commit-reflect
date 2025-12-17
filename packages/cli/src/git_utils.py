@@ -5,20 +5,21 @@ This module provides functions for interacting with git repositories
 to extract commit information needed for reflection context.
 """
 
-import subprocess
 import re
-from datetime import datetime, timezone
+import subprocess
+from datetime import datetime
 from pathlib import Path
-from typing import Optional, List, Dict, Tuple
+
 from shared.types.reflection import CommitContext
 
 
 class GitError(Exception):
     """Exception raised for git-related errors."""
+
     pass
 
 
-def run_git_command(args: List[str], cwd: Optional[Path] = None) -> str:
+def run_git_command(args: list[str], cwd: Path | None = None) -> str:
     """
     Run a git command and return output.
 
@@ -47,7 +48,7 @@ def run_git_command(args: List[str], cwd: Optional[Path] = None) -> str:
         raise GitError("Git executable not found. Please ensure git is installed.") from None
 
 
-def is_git_repository(path: Optional[Path] = None) -> bool:
+def is_git_repository(path: Path | None = None) -> bool:
     """
     Check if the current directory is a git repository.
 
@@ -64,7 +65,7 @@ def is_git_repository(path: Optional[Path] = None) -> bool:
         return False
 
 
-def get_current_branch(cwd: Optional[Path] = None) -> str:
+def get_current_branch(cwd: Path | None = None) -> str:
     """
     Get the name of the current git branch.
 
@@ -85,10 +86,10 @@ def get_current_branch(cwd: Optional[Path] = None) -> str:
             commit_hash = run_git_command(["rev-parse", "HEAD"], cwd=cwd)
             return f"detached-{commit_hash[:8]}"
         except GitError:
-            raise e
+            raise e from None
 
 
-def get_repository_root(cwd: Optional[Path] = None) -> Path:
+def get_repository_root(cwd: Path | None = None) -> Path:
     """
     Get the root directory of the git repository.
 
@@ -105,7 +106,7 @@ def get_repository_root(cwd: Optional[Path] = None) -> Path:
     return Path(output)
 
 
-def get_commit_hash(ref: str = "HEAD", cwd: Optional[Path] = None) -> str:
+def get_commit_hash(ref: str = "HEAD", cwd: Path | None = None) -> str:
     """
     Get the full commit hash for a reference.
 
@@ -122,7 +123,7 @@ def get_commit_hash(ref: str = "HEAD", cwd: Optional[Path] = None) -> str:
     return run_git_command(["rev-parse", ref], cwd=cwd)
 
 
-def get_short_commit_hash(ref: str = "HEAD", cwd: Optional[Path] = None) -> str:
+def get_short_commit_hash(ref: str = "HEAD", cwd: Path | None = None) -> str:
     """
     Get the short commit hash for a reference.
 
@@ -139,7 +140,7 @@ def get_short_commit_hash(ref: str = "HEAD", cwd: Optional[Path] = None) -> str:
     return run_git_command(["rev-parse", "--short", ref], cwd=cwd)
 
 
-def get_commit_message(commit_hash: str, cwd: Optional[Path] = None) -> str:
+def get_commit_message(commit_hash: str, cwd: Path | None = None) -> str:
     """
     Get the commit message for a commit.
 
@@ -156,7 +157,7 @@ def get_commit_message(commit_hash: str, cwd: Optional[Path] = None) -> str:
     return run_git_command(["log", "-1", "--format=%B", commit_hash], cwd=cwd)
 
 
-def get_commit_author(commit_hash: str, cwd: Optional[Path] = None) -> Tuple[str, str]:
+def get_commit_author(commit_hash: str, cwd: Path | None = None) -> tuple[str, str]:
     """
     Get the author name and email for a commit.
 
@@ -175,7 +176,7 @@ def get_commit_author(commit_hash: str, cwd: Optional[Path] = None) -> Tuple[str
     return name, email
 
 
-def get_commit_timestamp(commit_hash: str, cwd: Optional[Path] = None) -> datetime:
+def get_commit_timestamp(commit_hash: str, cwd: Path | None = None) -> datetime:
     """
     Get the timestamp of a commit.
 
@@ -190,14 +191,11 @@ def get_commit_timestamp(commit_hash: str, cwd: Optional[Path] = None) -> dateti
         GitError: If commit doesn't exist
     """
     # Get timestamp in ISO 8601 format
-    timestamp_str = run_git_command(
-        ["log", "-1", "--format=%aI", commit_hash],
-        cwd=cwd
-    )
+    timestamp_str = run_git_command(["log", "-1", "--format=%aI", commit_hash], cwd=cwd)
     return datetime.fromisoformat(timestamp_str)
 
 
-def get_changed_files(commit_hash: str, cwd: Optional[Path] = None) -> List[str]:
+def get_changed_files(commit_hash: str, cwd: Path | None = None) -> list[str]:
     """
     Get list of files changed in a commit.
 
@@ -212,15 +210,14 @@ def get_changed_files(commit_hash: str, cwd: Optional[Path] = None) -> List[str]
         GitError: If commit doesn't exist
     """
     output = run_git_command(
-        ["diff-tree", "--no-commit-id", "--name-only", "-r", commit_hash],
-        cwd=cwd
+        ["diff-tree", "--no-commit-id", "--name-only", "-r", commit_hash], cwd=cwd
     )
     if not output:
         return []
     return output.split("\n")
 
 
-def get_commit_stats(commit_hash: str, cwd: Optional[Path] = None) -> Dict[str, int]:
+def get_commit_stats(commit_hash: str, cwd: Path | None = None) -> dict[str, int]:
     """
     Get statistics for a commit (insertions, deletions).
 
@@ -234,10 +231,7 @@ def get_commit_stats(commit_hash: str, cwd: Optional[Path] = None) -> Dict[str, 
     Raises:
         GitError: If commit doesn't exist
     """
-    output = run_git_command(
-        ["show", "--shortstat", "--format=", commit_hash],
-        cwd=cwd
-    )
+    output = run_git_command(["show", "--shortstat", "--format=", commit_hash], cwd=cwd)
 
     stats = {
         "insertions": 0,
@@ -250,15 +244,15 @@ def get_commit_stats(commit_hash: str, cwd: Optional[Path] = None) -> Dict[str, 
         parts = output.strip().split(", ")
         for part in parts:
             if "file" in part:
-                match = re.search(r'(\d+)', part)
+                match = re.search(r"(\d+)", part)
                 if match:
                     stats["files_changed"] = int(match.group(1))
             elif "insertion" in part:
-                match = re.search(r'(\d+)', part)
+                match = re.search(r"(\d+)", part)
                 if match:
                     stats["insertions"] = int(match.group(1))
             elif "deletion" in part:
-                match = re.search(r'(\d+)', part)
+                match = re.search(r"(\d+)", part)
                 if match:
                     stats["deletions"] = int(match.group(1))
 
@@ -267,9 +261,9 @@ def get_commit_stats(commit_hash: str, cwd: Optional[Path] = None) -> Dict[str, 
 
 def get_commit_context(
     commit_hash: str = "HEAD",
-    project: Optional[str] = None,
-    branch: Optional[str] = None,
-    cwd: Optional[Path] = None,
+    project: str | None = None,
+    branch: str | None = None,
+    cwd: Path | None = None,
 ) -> CommitContext:
     """
     Get complete context for a commit.
@@ -333,8 +327,8 @@ def get_commit_context(
 def get_commits_in_range(
     from_ref: str,
     to_ref: str = "HEAD",
-    cwd: Optional[Path] = None,
-) -> List[str]:
+    cwd: Path | None = None,
+) -> list[str]:
     """
     Get list of commit hashes in a range.
 
@@ -349,10 +343,7 @@ def get_commits_in_range(
     Raises:
         GitError: If references don't exist
     """
-    output = run_git_command(
-        ["rev-list", f"{from_ref}..{to_ref}"],
-        cwd=cwd
-    )
+    output = run_git_command(["rev-list", f"{from_ref}..{to_ref}"], cwd=cwd)
     if not output:
         return []
     return output.split("\n")
@@ -360,8 +351,8 @@ def get_commits_in_range(
 
 def get_recent_commits(
     count: int = 10,
-    cwd: Optional[Path] = None,
-) -> List[str]:
+    cwd: Path | None = None,
+) -> list[str]:
     """
     Get list of recent commit hashes.
 
@@ -375,10 +366,7 @@ def get_recent_commits(
     Raises:
         GitError: If not in a git repository
     """
-    output = run_git_command(
-        ["log", f"-{count}", "--format=%H"],
-        cwd=cwd
-    )
+    output = run_git_command(["log", f"-{count}", "--format=%H"], cwd=cwd)
     if not output:
         return []
     return output.split("\n")

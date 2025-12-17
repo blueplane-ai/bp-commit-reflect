@@ -1,24 +1,26 @@
 """Error handling and recovery mechanisms."""
 
 import json
-import os
-from pathlib import Path
-from typing import Dict, Any, Optional, Tuple
 from datetime import datetime
+from pathlib import Path
+from typing import Any
 
 
 class SessionError(Exception):
     """Base exception for session-related errors."""
+
     pass
 
 
 class StorageError(Exception):
     """Exception for storage operation failures."""
+
     pass
 
 
 class ConfigurationError(Exception):
     """Exception for configuration errors."""
+
     pass
 
 
@@ -39,7 +41,7 @@ class RecoveryManager:
         self.recovery_dir = Path(recovery_dir).expanduser()
         self.recovery_dir.mkdir(parents=True, exist_ok=True)
 
-    def save_session_state(self, session_id: str, state: Dict[str, Any]) -> bool:
+    def save_session_state(self, session_id: str, state: dict[str, Any]) -> bool:
         """
         Save session state for recovery.
 
@@ -52,10 +54,7 @@ class RecoveryManager:
         """
         try:
             recovery_file = self.recovery_dir / f"{session_id}.json"
-            state_with_timestamp = {
-                **state,
-                "saved_at": datetime.utcnow().isoformat() + "Z"
-            }
+            state_with_timestamp = {**state, "saved_at": datetime.utcnow().isoformat() + "Z"}
 
             with open(recovery_file, "w", encoding="utf-8") as f:
                 json.dump(state_with_timestamp, f, indent=2)
@@ -66,7 +65,7 @@ class RecoveryManager:
             print(f"Warning: Failed to save recovery state: {e}")
             return False
 
-    def load_session_state(self, session_id: str) -> Optional[Dict[str, Any]]:
+    def load_session_state(self, session_id: str) -> dict[str, Any] | None:
         """
         Load saved session state.
 
@@ -82,7 +81,7 @@ class RecoveryManager:
             if not recovery_file.exists():
                 return None
 
-            with open(recovery_file, "r", encoding="utf-8") as f:
+            with open(recovery_file, encoding="utf-8") as f:
                 state = json.load(f)
 
             return state
@@ -125,7 +124,7 @@ class RecoveryManager:
         try:
             for recovery_file in self.recovery_dir.glob("*.json"):
                 try:
-                    with open(recovery_file, "r", encoding="utf-8") as f:
+                    with open(recovery_file, encoding="utf-8") as f:
                         state = json.load(f)
 
                     session_id = recovery_file.stem
@@ -133,7 +132,7 @@ class RecoveryManager:
                     summary = {
                         "project": state.get("project", "unknown"),
                         "commit": state.get("commit_hash", "unknown")[:8],
-                        "questions_answered": len(state.get("answers", {}))
+                        "questions_answered": len(state.get("answers", {})),
                     }
 
                     sessions.append((session_id, saved_at, summary))
@@ -151,10 +150,8 @@ class RecoveryManager:
 
 
 def handle_storage_failure(
-    backends: list,
-    reflection: Dict[str, Any],
-    min_success: int = 1
-) -> Tuple[list, list]:
+    backends: list, reflection: dict[str, Any], min_success: int = 1
+) -> tuple[list, list]:
     """
     Gracefully handle storage failures across multiple backends.
 

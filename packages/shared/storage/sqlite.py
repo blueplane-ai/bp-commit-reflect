@@ -5,26 +5,25 @@ This module implements the SQLite storage backend with proper schema,
 indices, migrations, and connection pooling.
 """
 
-import sqlite3
 import json
+import sqlite3
+from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional, Dict, Any
+from typing import Any, Optional
 from uuid import UUID
-from contextlib import contextmanager
 
-from .base import StorageBackend as BaseStorageBackend
+from shared.types.reflection import Reflection
 from shared.types.storage import (
-    StorageResult,
-    StorageError,
-    StorageConnectionError,
-    StorageWriteError,
-    StorageReadError,
     QueryOptions,
     SortOrder,
+    StorageConnectionError,
+    StorageReadError,
+    StorageResult,
+    StorageWriteError,
 )
-from shared.types.reflection import Reflection
 
+from .base import StorageBackend as BaseStorageBackend
 
 # Database schema version for migrations
 SCHEMA_VERSION = 1
@@ -37,7 +36,7 @@ class SQLiteStorage(BaseStorageBackend):
     Provides persistent, queryable storage with indices for performance.
     """
 
-    def __init__(self, config: Dict[str, Any] | str):
+    def __init__(self, config: dict[str, Any] | str):
         """
         Initialize SQLite storage backend.
 
@@ -47,7 +46,7 @@ class SQLiteStorage(BaseStorageBackend):
         if isinstance(config, str):
             self.db_path = Path(config).expanduser()
         else:
-            self.db_path = Path(config.get('path', '~/.commit-reflect/reflections.db')).expanduser()
+            self.db_path = Path(config.get("path", "~/.commit-reflect/reflections.db")).expanduser()
         self.connection = None
         self._initialized = False
 
@@ -79,7 +78,7 @@ class SQLiteStorage(BaseStorageBackend):
             conn.execute("PRAGMA foreign_keys = ON")
             yield conn
         except sqlite3.Error as e:
-            raise StorageConnectionError(f"Failed to connect to database: {e}")
+            raise StorageConnectionError(f"Failed to connect to database: {e}") from e
         finally:
             if conn:
                 conn.close()
@@ -103,12 +102,14 @@ class SQLiteStorage(BaseStorageBackend):
                 cursor = conn.cursor()
 
                 # Create schema version table
-                cursor.execute("""
+                cursor.execute(
+                    """
                     CREATE TABLE IF NOT EXISTS schema_version (
                         version INTEGER PRIMARY KEY,
                         applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     )
-                """)
+                """
+                )
 
                 # Check current schema version
                 cursor.execute("SELECT version FROM schema_version ORDER BY version DESC LIMIT 1")
@@ -142,7 +143,8 @@ class SQLiteStorage(BaseStorageBackend):
         # Migration to version 1: Initial schema
         if from_version < 1:
             # Reflections table
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS reflections (
                     id TEXT PRIMARY KEY,
                     created_at TIMESTAMP NOT NULL,
@@ -166,10 +168,12 @@ class SQLiteStorage(BaseStorageBackend):
                     interrupted INTEGER DEFAULT 0,
                     additional_context TEXT
                 )
-            """)
+            """
+            )
 
             # Answers table
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS answers (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     reflection_id TEXT NOT NULL,
@@ -180,43 +184,58 @@ class SQLiteStorage(BaseStorageBackend):
                     metadata TEXT,
                     FOREIGN KEY (reflection_id) REFERENCES reflections(id) ON DELETE CASCADE
                 )
-            """)
+            """
+            )
 
             # Indices for performance
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_reflections_created_at
                 ON reflections(created_at)
-            """)
+            """
+            )
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_reflections_project_name
                 ON reflections(project_name)
-            """)
+            """
+            )
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_reflections_commit_hash
                 ON reflections(commit_hash)
-            """)
+            """
+            )
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_reflections_branch
                 ON reflections(branch)
-            """)
+            """
+            )
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_reflections_author_email
                 ON reflections(author_email)
-            """)
+            """
+            )
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_answers_reflection_id
                 ON answers(reflection_id)
-            """)
+            """
+            )
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_answers_question_id
                 ON answers(question_id)
-            """)
+            """
+            )
 
             # Record migration
             cursor.execute("INSERT INTO schema_version (version) VALUES (1)")
@@ -320,7 +339,8 @@ class SQLiteStorage(BaseStorageBackend):
 
                 if exists:
                     # Update existing reflection
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         UPDATE reflections SET
                             updated_at = ?,
                             project_name = ?,
@@ -342,34 +362,43 @@ class SQLiteStorage(BaseStorageBackend):
                             interrupted = ?,
                             additional_context = ?
                         WHERE id = ?
-                    """, (
-                        reflection.updated_at,
-                        meta.project_name,
-                        ctx.commit_hash,
-                        ctx.commit_message,
-                        ctx.branch,
-                        ctx.author_name,
-                        ctx.author_email,
-                        ctx.timestamp,
-                        ctx.files_changed,
-                        ctx.insertions,
-                        ctx.deletions,
-                        json.dumps(ctx.changed_files),
-                        str(meta.session_id),
-                        meta.started_at,
-                        meta.completed_at,
-                        meta.tool_version,
-                        meta.environment,
-                        1 if meta.interrupted else 0,
-                        json.dumps(meta.additional_context) if meta.additional_context else None,
-                        str(reflection.id),
-                    ))
+                    """,
+                        (
+                            reflection.updated_at,
+                            meta.project_name,
+                            ctx.commit_hash,
+                            ctx.commit_message,
+                            ctx.branch,
+                            ctx.author_name,
+                            ctx.author_email,
+                            ctx.timestamp,
+                            ctx.files_changed,
+                            ctx.insertions,
+                            ctx.deletions,
+                            json.dumps(ctx.changed_files),
+                            str(meta.session_id),
+                            meta.started_at,
+                            meta.completed_at,
+                            meta.tool_version,
+                            meta.environment,
+                            1 if meta.interrupted else 0,
+                            (
+                                json.dumps(meta.additional_context)
+                                if meta.additional_context
+                                else None
+                            ),
+                            str(reflection.id),
+                        ),
+                    )
 
                     # Delete old answers
-                    cursor.execute("DELETE FROM answers WHERE reflection_id = ?", (str(reflection.id),))
+                    cursor.execute(
+                        "DELETE FROM answers WHERE reflection_id = ?", (str(reflection.id),)
+                    )
                 else:
                     # Insert new reflection
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         INSERT INTO reflections (
                             id, created_at, updated_at, project_name,
                             commit_hash, commit_message, branch, author_name, author_email,
@@ -377,51 +406,60 @@ class SQLiteStorage(BaseStorageBackend):
                             session_id, session_started_at, session_completed_at,
                             tool_version, environment, interrupted, additional_context
                         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """, (
-                        str(reflection.id),
-                        reflection.created_at,
-                        reflection.updated_at,
-                        meta.project_name,
-                        ctx.commit_hash,
-                        ctx.commit_message,
-                        ctx.branch,
-                        ctx.author_name,
-                        ctx.author_email,
-                        ctx.timestamp,
-                        ctx.files_changed,
-                        ctx.insertions,
-                        ctx.deletions,
-                        json.dumps(ctx.changed_files),
-                        str(meta.session_id),
-                        meta.started_at,
-                        meta.completed_at,
-                        meta.tool_version,
-                        meta.environment,
-                        1 if meta.interrupted else 0,
-                        json.dumps(meta.additional_context) if meta.additional_context else None,
-                    ))
+                    """,
+                        (
+                            str(reflection.id),
+                            reflection.created_at,
+                            reflection.updated_at,
+                            meta.project_name,
+                            ctx.commit_hash,
+                            ctx.commit_message,
+                            ctx.branch,
+                            ctx.author_name,
+                            ctx.author_email,
+                            ctx.timestamp,
+                            ctx.files_changed,
+                            ctx.insertions,
+                            ctx.deletions,
+                            json.dumps(ctx.changed_files),
+                            str(meta.session_id),
+                            meta.started_at,
+                            meta.completed_at,
+                            meta.tool_version,
+                            meta.environment,
+                            1 if meta.interrupted else 0,
+                            (
+                                json.dumps(meta.additional_context)
+                                if meta.additional_context
+                                else None
+                            ),
+                        ),
+                    )
 
                 # Insert answers
                 for answer in reflection.answers:
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         INSERT INTO answers (
                             reflection_id, question_id, question_text, answer, answered_at, metadata
                         ) VALUES (?, ?, ?, ?, ?, ?)
-                    """, (
-                        str(reflection.id),
-                        answer.question_id,
-                        answer.question_text,
-                        answer.answer,
-                        answer.answered_at,
-                        json.dumps(answer.metadata) if answer.metadata else None,
-                    ))
+                    """,
+                        (
+                            str(reflection.id),
+                            answer.question_id,
+                            answer.question_text,
+                            answer.answer,
+                            answer.answered_at,
+                            json.dumps(answer.metadata) if answer.metadata else None,
+                        ),
+                    )
 
                 conn.commit()
 
             return StorageResult.success_result("Reflection saved successfully")
 
         except Exception as e:
-            raise StorageWriteError(f"Failed to save reflection: {e}")
+            raise StorageWriteError(f"Failed to save reflection: {e}") from e
 
     def get_reflection(self, reflection_id: UUID) -> Optional[Reflection]:
         """
@@ -447,16 +485,16 @@ class SQLiteStorage(BaseStorageBackend):
                 # Get answers
                 cursor.execute(
                     "SELECT * FROM answers WHERE reflection_id = ? ORDER BY answered_at",
-                    (str(reflection_id),)
+                    (str(reflection_id),),
                 )
                 answer_rows = cursor.fetchall()
 
                 return self._row_to_reflection(row, answer_rows)
 
         except Exception as e:
-            raise StorageReadError(f"Failed to get reflection: {e}")
+            raise StorageReadError(f"Failed to get reflection: {e}") from e
 
-    def query_reflections(self, options: QueryOptions) -> List[Reflection]:
+    def query_reflections(self, options: QueryOptions) -> list[Reflection]:
         """
         Query reflections based on options.
 
@@ -523,7 +561,7 @@ class SQLiteStorage(BaseStorageBackend):
                     # Get answers for this reflection
                     cursor.execute(
                         "SELECT * FROM answers WHERE reflection_id = ? ORDER BY answered_at",
-                        (row['id'],)
+                        (row["id"],),
                     )
                     answer_rows = cursor.fetchall()
 
@@ -534,7 +572,7 @@ class SQLiteStorage(BaseStorageBackend):
                 return reflections
 
         except Exception as e:
-            raise StorageReadError(f"Failed to query reflections: {e}")
+            raise StorageReadError(f"Failed to query reflections: {e}") from e
 
     def delete_reflection(self, reflection_id: UUID) -> StorageResult:
         """
@@ -561,9 +599,9 @@ class SQLiteStorage(BaseStorageBackend):
             return StorageResult.success_result("Reflection deleted successfully")
 
         except Exception as e:
-            raise StorageWriteError(f"Failed to delete reflection: {e}")
+            raise StorageWriteError(f"Failed to delete reflection: {e}") from e
 
-    def count_reflections(self, filter_by: Optional[Dict[str, Any]] = None) -> int:
+    def count_reflections(self, filter_by: Optional[dict[str, Any]] = None) -> int:
         """
         Count reflections matching optional filters.
 
@@ -591,7 +629,7 @@ class SQLiteStorage(BaseStorageBackend):
                 return count
 
         except Exception as e:
-            raise StorageReadError(f"Failed to count reflections: {e}")
+            raise StorageReadError(f"Failed to count reflections: {e}") from e
 
     def health_check(self) -> StorageResult:
         """
@@ -613,7 +651,9 @@ class SQLiteStorage(BaseStorageBackend):
         except Exception as e:
             return StorageResult.error_result(f"SQLite storage is unhealthy: {e}", error=e)
 
-    def _row_to_reflection(self, row: sqlite3.Row, answer_rows: List[sqlite3.Row]) -> Optional[Reflection]:
+    def _row_to_reflection(
+        self, row: sqlite3.Row, answer_rows: list[sqlite3.Row]
+    ) -> Optional[Reflection]:
         """
         Convert database row to Reflection object.
 
@@ -625,65 +665,69 @@ class SQLiteStorage(BaseStorageBackend):
             Reflection object or None if conversion fails
         """
         try:
-            from ..types.reflection import ReflectionAnswer, CommitContext, SessionMetadata
+            from ..types.reflection import CommitContext, ReflectionAnswer, SessionMetadata
 
             # Parse answers
             answers = []
             for answer_row in answer_rows:
                 answer = ReflectionAnswer(
-                    question_id=answer_row['question_id'],
-                    question_text=answer_row['question_text'],
-                    answer=answer_row['answer'],
-                    answered_at=datetime.fromisoformat(answer_row['answered_at']),
-                    metadata=json.loads(answer_row['metadata']) if answer_row['metadata'] else None,
+                    question_id=answer_row["question_id"],
+                    question_text=answer_row["question_text"],
+                    answer=answer_row["answer"],
+                    answered_at=datetime.fromisoformat(answer_row["answered_at"]),
+                    metadata=json.loads(answer_row["metadata"]) if answer_row["metadata"] else None,
                 )
                 answers.append(answer)
 
             # Parse commit context
             commit_context = CommitContext(
-                commit_hash=row['commit_hash'],
-                commit_message=row['commit_message'],
-                branch=row['branch'],
-                author_name=row['author_name'],
-                author_email=row['author_email'],
-                timestamp=datetime.fromisoformat(row['commit_timestamp']),
-                files_changed=row['files_changed'] or 0,
-                insertions=row['insertions'] or 0,
-                deletions=row['deletions'] or 0,
-                changed_files=json.loads(row['changed_files']) if row['changed_files'] else [],
+                commit_hash=row["commit_hash"],
+                commit_message=row["commit_message"],
+                branch=row["branch"],
+                author_name=row["author_name"],
+                author_email=row["author_email"],
+                timestamp=datetime.fromisoformat(row["commit_timestamp"]),
+                files_changed=row["files_changed"] or 0,
+                insertions=row["insertions"] or 0,
+                deletions=row["deletions"] or 0,
+                changed_files=json.loads(row["changed_files"]) if row["changed_files"] else [],
             )
 
             # Parse session metadata
             session_metadata = SessionMetadata(
-                session_id=UUID(row['session_id']),
-                started_at=datetime.fromisoformat(row['session_started_at']),
-                completed_at=datetime.fromisoformat(row['session_completed_at'])
-                    if row['session_completed_at'] else None,
-                project_name=row['project_name'],
-                tool_version=row['tool_version'],
-                environment=row['environment'],
-                interrupted=bool(row['interrupted']),
-                additional_context=json.loads(row['additional_context'])
-                    if row['additional_context'] else None,
+                session_id=UUID(row["session_id"]),
+                started_at=datetime.fromisoformat(row["session_started_at"]),
+                completed_at=(
+                    datetime.fromisoformat(row["session_completed_at"])
+                    if row["session_completed_at"]
+                    else None
+                ),
+                project_name=row["project_name"],
+                tool_version=row["tool_version"],
+                environment=row["environment"],
+                interrupted=bool(row["interrupted"]),
+                additional_context=(
+                    json.loads(row["additional_context"]) if row["additional_context"] else None
+                ),
             )
 
             # Create reflection
             reflection = Reflection(
-                id=UUID(row['id']),
+                id=UUID(row["id"]),
                 answers=answers,
                 commit_context=commit_context,
                 session_metadata=session_metadata,
-                created_at=datetime.fromisoformat(row['created_at']),
-                updated_at=datetime.fromisoformat(row['updated_at']),
+                created_at=datetime.fromisoformat(row["created_at"]),
+                updated_at=datetime.fromisoformat(row["updated_at"]),
             )
 
             return reflection
 
         except Exception as e:
-            raise StorageReadError(f"Failed to convert row to reflection: {e}")
+            raise StorageReadError(f"Failed to convert row to reflection: {e}") from e
 
     # Legacy interface methods (for compatibility with old StorageBackend)
-    def write(self, reflection: Dict[str, Any]) -> bool:
+    def write(self, reflection: dict[str, Any]) -> bool:
         """
         Write a reflection to storage (legacy interface).
 
@@ -711,11 +755,8 @@ class SQLiteStorage(BaseStorageBackend):
             return False
 
     def read_recent(
-        self,
-        limit: int = 10,
-        project: Optional[str] = None,
-        since: Optional[datetime] = None
-    ) -> List[Dict[str, Any]]:
+        self, limit: int = 10, project: Optional[str] = None, since: Optional[datetime] = None
+    ) -> list[dict[str, Any]]:
         """
         Read recent reflections from storage (legacy interface).
 

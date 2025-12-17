@@ -5,15 +5,14 @@ Tests the factory pattern for creating storage backends and coordinating
 writes across multiple backends.
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock
 
-from shared.storage.factory import StorageFactory, MultiBackendCoordinator
-from shared.storage.jsonl import JSONLStorage
-from shared.storage.sqlite import SQLiteStorage
+import pytest
 from shared.storage.base import StorageBackend
-from shared.types.storage import StorageError
+from shared.storage.factory import MultiBackendCoordinator, StorageFactory
+from shared.storage.jsonl import JSONLStorage
 from shared.types.config import StorageConfig
+from shared.types.storage import StorageError
 
 
 @pytest.mark.storage
@@ -28,26 +27,33 @@ class TestStorageFactory:
     def test_factory_register_backend(self):
         """Test registering a backend type."""
         factory = StorageFactory()
-        
+
         # Create a mock backend class
         class MockBackend(StorageBackend):
             def initialize(self):
                 pass
+
             def close(self):
                 pass
+
             def save_reflection(self, reflection):
                 pass
+
             def get_reflection(self, reflection_id):
                 pass
+
             def query_reflections(self, options):
                 pass
+
             def delete_reflection(self, reflection_id):
                 pass
+
             def count_reflections(self, filter_by=None):
                 pass
+
             def health_check(self):
                 pass
-        
+
         factory.register_backend("mock", MockBackend)
         assert factory.is_registered("mock")
         assert "mock" in factory.get_registered_types()
@@ -55,37 +61,44 @@ class TestStorageFactory:
     def test_factory_register_duplicate_backend(self):
         """Test that registering duplicate backend raises error."""
         factory = StorageFactory()
-        
+
         class MockBackend(StorageBackend):
             def initialize(self):
                 pass
+
             def close(self):
                 pass
+
             def save_reflection(self, reflection):
                 pass
+
             def get_reflection(self, reflection_id):
                 pass
+
             def query_reflections(self, options):
                 pass
+
             def delete_reflection(self, reflection_id):
                 pass
+
             def count_reflections(self, filter_by=None):
                 pass
+
             def health_check(self):
                 pass
-        
+
         factory.register_backend("mock", MockBackend)
-        
+
         with pytest.raises(StorageError):
             factory.register_backend("mock", MockBackend)
 
     def test_factory_register_invalid_backend(self):
         """Test that registering non-Backend class raises error."""
         factory = StorageFactory()
-        
+
         class NotABackend:
             pass
-        
+
         with pytest.raises(StorageError):
             factory.register_backend("invalid", NotABackend)
 
@@ -93,12 +106,9 @@ class TestStorageFactory:
         """Test creating a backend instance."""
         factory = StorageFactory()
         factory.register_backend("jsonl", JSONLStorage)
-        
-        config = StorageConfig(
-            backend_type="jsonl",
-            path=str(tmp_path / "test.jsonl")
-        )
-        
+
+        config = StorageConfig(backend_type="jsonl", path=str(tmp_path / "test.jsonl"))
+
         backend = factory.create_backend(config)
         assert isinstance(backend, JSONLStorage)
 
@@ -108,8 +118,7 @@ class TestStorageFactory:
 
         # Use a valid backend type that's just not registered in this factory
         config = StorageConfig(
-            backend_type="sqlite",  # Valid enum value, but not registered
-            path="/tmp/test.db"
+            backend_type="sqlite", path="/tmp/test.db"  # Valid enum value, but not registered
         )
 
         with pytest.raises(StorageError):
@@ -119,18 +128,12 @@ class TestStorageFactory:
         """Test creating multiple backends from config."""
         factory = StorageFactory()
         factory.register_backend("jsonl", JSONLStorage)
-        
+
         configs = [
-            StorageConfig(
-                backend_type="jsonl",
-                path=str(tmp_path / "test1.jsonl")
-            ),
-            StorageConfig(
-                backend_type="jsonl",
-                path=str(tmp_path / "test2.jsonl")
-            ),
+            StorageConfig(backend_type="jsonl", path=str(tmp_path / "test1.jsonl")),
+            StorageConfig(backend_type="jsonl", path=str(tmp_path / "test2.jsonl")),
         ]
-        
+
         backends = [factory.create_backend(cfg) for cfg in configs]
         assert len(backends) == 2
         assert all(isinstance(b, JSONLStorage) for b in backends)
@@ -144,7 +147,7 @@ class TestMultiBackendCoordinator:
         """Test coordinator initialization."""
         mock_backend1 = Mock(spec=StorageBackend)
         mock_backend1.get_type = Mock(return_value="mock1")
-        
+
         coordinator = MultiBackendCoordinator([mock_backend1])
         assert len(coordinator.backends) == 1
         assert coordinator._primary_backend == mock_backend1
@@ -158,14 +161,11 @@ class TestMultiBackendCoordinator:
         """Test that primary backend is set correctly."""
         mock_backend1 = Mock(spec=StorageBackend)
         mock_backend1.get_type = Mock(return_value="mock1")
-        
+
         mock_backend2 = Mock(spec=StorageBackend)
         mock_backend2.get_type = Mock(return_value="mock2")
-        
-        coordinator = MultiBackendCoordinator(
-            [mock_backend1, mock_backend2],
-            primary_type="mock2"
-        )
+
+        coordinator = MultiBackendCoordinator([mock_backend1, mock_backend2], primary_type="mock2")
         assert coordinator._primary_backend == mock_backend2
 
     def test_coordinator_write_all_backends(self, sample_reflection):
@@ -173,13 +173,13 @@ class TestMultiBackendCoordinator:
         mock_backend1 = Mock(spec=StorageBackend)
         mock_backend1.get_type = Mock(return_value="mock1")
         mock_backend1.write = Mock(return_value=True)
-        
+
         mock_backend2 = Mock(spec=StorageBackend)
         mock_backend2.get_type = Mock(return_value="mock2")
         mock_backend2.write = Mock(return_value=True)
-        
+
         coordinator = MultiBackendCoordinator([mock_backend1, mock_backend2])
-        
+
         result = coordinator.write(sample_reflection)
         assert result is True
         mock_backend1.write.assert_called_once_with(sample_reflection)
@@ -190,13 +190,13 @@ class TestMultiBackendCoordinator:
         mock_backend1 = Mock(spec=StorageBackend)
         mock_backend1.get_type = Mock(return_value="mock1")
         mock_backend1.write = Mock(return_value=True)
-        
+
         mock_backend2 = Mock(spec=StorageBackend)
         mock_backend2.get_type = Mock(return_value="mock2")
         mock_backend2.write = Mock(return_value=False)
-        
+
         coordinator = MultiBackendCoordinator([mock_backend1, mock_backend2])
-        
+
         result = coordinator.write(sample_reflection)
         assert result is True  # Primary succeeded
 
@@ -205,13 +205,13 @@ class TestMultiBackendCoordinator:
         mock_backend1 = Mock(spec=StorageBackend)
         mock_backend1.get_type = Mock(return_value="mock1")
         mock_backend1.write = Mock(side_effect=Exception("Error 1"))
-        
+
         mock_backend2 = Mock(spec=StorageBackend)
         mock_backend2.get_type = Mock(return_value="mock2")
         mock_backend2.write = Mock(side_effect=Exception("Error 2"))
-        
+
         coordinator = MultiBackendCoordinator([mock_backend1, mock_backend2])
-        
+
         with pytest.raises(StorageError):
             coordinator.write(sample_reflection)
 
@@ -220,12 +220,12 @@ class TestMultiBackendCoordinator:
         mock_backend1 = Mock(spec=StorageBackend)
         mock_backend1.get_type = Mock(return_value="mock1")
         mock_backend1.read = Mock(return_value=[{"test": "data"}])
-        
+
         mock_backend2 = Mock(spec=StorageBackend)
         mock_backend2.get_type = Mock(return_value="mock2")
-        
+
         coordinator = MultiBackendCoordinator([mock_backend1, mock_backend2])
-        
+
         result = coordinator.read(limit=10)
         assert result == [{"test": "data"}]
         mock_backend1.read.assert_called_once_with(limit=10)
@@ -235,13 +235,13 @@ class TestMultiBackendCoordinator:
         mock_backend1 = Mock(spec=StorageBackend)
         mock_backend1.get_type = Mock(return_value="mock1")
         mock_backend1.read = Mock(side_effect=Exception("Error"))
-        
+
         mock_backend2 = Mock(spec=StorageBackend)
         mock_backend2.get_type = Mock(return_value="mock2")
         mock_backend2.read = Mock(return_value=[{"test": "data"}])
-        
+
         coordinator = MultiBackendCoordinator([mock_backend1, mock_backend2])
-        
+
         result = coordinator.read(limit=10)
         assert result == [{"test": "data"}]
         mock_backend2.read.assert_called_once_with(limit=10)
@@ -251,9 +251,9 @@ class TestMultiBackendCoordinator:
         mock_backend1 = Mock(spec=StorageBackend)
         mock_backend1.get_type = Mock(return_value="mock1")
         mock_backend1.read_recent = Mock(return_value=[{"test": "data"}])
-        
+
         coordinator = MultiBackendCoordinator([mock_backend1])
-        
+
         result = coordinator.read_recent(count=5)
         assert result == [{"test": "data"}]
         mock_backend1.read_recent.assert_called_once_with(count=5)
@@ -263,13 +263,13 @@ class TestMultiBackendCoordinator:
         mock_backend1 = Mock(spec=StorageBackend)
         mock_backend1.get_type = Mock(return_value="mock1")
         mock_backend1.health_check = Mock(return_value=True)
-        
+
         mock_backend2 = Mock(spec=StorageBackend)
         mock_backend2.get_type = Mock(return_value="mock2")
         mock_backend2.health_check = Mock(return_value=False)
-        
+
         coordinator = MultiBackendCoordinator([mock_backend1, mock_backend2])
-        
+
         health = coordinator.health_check()
         assert health["mock1"] is True
         assert health["mock2"] is False
@@ -279,13 +279,13 @@ class TestMultiBackendCoordinator:
         mock_backend1 = Mock(spec=StorageBackend)
         mock_backend1.get_type = Mock(return_value="mock1")
         mock_backend1.health_check = Mock(return_value=True)
-        
+
         mock_backend2 = Mock(spec=StorageBackend)
         mock_backend2.get_type = Mock(return_value="mock2")
         mock_backend2.health_check = Mock(return_value=False)
-        
+
         coordinator = MultiBackendCoordinator([mock_backend1, mock_backend2])
-        
+
         healthy = coordinator.get_healthy_backends()
         assert len(healthy) == 1
         assert healthy[0] == mock_backend1
@@ -295,13 +295,13 @@ class TestMultiBackendCoordinator:
         mock_backend1 = Mock(spec=StorageBackend)
         mock_backend1.get_type = Mock(return_value="mock1")
         mock_backend1.close = Mock()
-        
+
         mock_backend2 = Mock(spec=StorageBackend)
         mock_backend2.get_type = Mock(return_value="mock2")
         mock_backend2.close = Mock()
-        
+
         coordinator = MultiBackendCoordinator([mock_backend1, mock_backend2])
         coordinator.close_all()
-        
+
         mock_backend1.close.assert_called_once()
         mock_backend2.close.assert_called_once()

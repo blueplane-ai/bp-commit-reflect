@@ -6,13 +6,14 @@ via JSON messages over stdin/stdout with an MCP server.
 
 import json
 import sys
-from typing import Dict, Any, Optional
 from datetime import datetime
 from enum import Enum
+from typing import Any
 
 
 class MessageType(Enum):
     """MCP message types."""
+
     REQUEST = "request"
     RESPONSE = "response"
     ERROR = "error"
@@ -28,9 +29,9 @@ class MCPCommunicator:
 
     def __init__(self):
         """Initialize MCP communicator."""
-        self.session_id: Optional[str] = None
+        self.session_id: str | None = None
 
-    def read_message(self) -> Optional[Dict[str, Any]]:
+    def read_message(self) -> dict[str, Any] | None:
         """
         Read a JSON message from stdin.
 
@@ -53,9 +54,7 @@ class MCPCommunicator:
             return None
 
     def send_response(
-        self,
-        data: Dict[str, Any],
-        message_type: MessageType = MessageType.RESPONSE
+        self, data: dict[str, Any], message_type: MessageType = MessageType.RESPONSE
     ) -> None:
         """
         Send a JSON response to stdout.
@@ -67,7 +66,7 @@ class MCPCommunicator:
         message = {
             "type": message_type.value,
             "timestamp": datetime.utcnow().isoformat() + "Z",
-            "data": data
+            "data": data,
         }
 
         if self.session_id:
@@ -81,7 +80,7 @@ class MCPCommunicator:
             # Can't send error via stdout if stdout failed
             sys.stderr.write(f"Error sending response: {e}\n")
 
-    def send_error(self, error_message: str, error_code: Optional[str] = None) -> None:
+    def send_error(self, error_message: str, error_code: str | None = None) -> None:
         """
         Send an error response.
 
@@ -89,16 +88,14 @@ class MCPCommunicator:
             error_message: Human-readable error message
             error_code: Optional error code
         """
-        error_data = {
-            "error": error_message
-        }
+        error_data = {"error": error_message}
 
         if error_code:
             error_data["code"] = error_code
 
         self.send_response(error_data, MessageType.ERROR)
 
-    def send_state(self, state: Dict[str, Any]) -> None:
+    def send_state(self, state: dict[str, Any]) -> None:
         """
         Send session state update.
 
@@ -114,7 +111,7 @@ class SessionStateSerializer:
     """
 
     @staticmethod
-    def serialize(session_state: Dict[str, Any]) -> Dict[str, Any]:
+    def serialize(session_state: dict[str, Any]) -> dict[str, Any]:
         """
         Serialize session state to JSON-compatible format.
 
@@ -134,13 +131,13 @@ class SessionStateSerializer:
             "answers": session_state.get("answers", {}),
             "started_at": session_state.get("started_at"),
             "last_activity": datetime.utcnow().isoformat() + "Z",
-            "status": session_state.get("status", "active")
+            "status": session_state.get("status", "active"),
         }
 
         return {k: v for k, v in serialized.items() if v is not None}
 
     @staticmethod
-    def deserialize(data: Dict[str, Any]) -> Dict[str, Any]:
+    def deserialize(data: dict[str, Any]) -> dict[str, Any]:
         """
         Deserialize session state from JSON format.
 
@@ -160,7 +157,7 @@ class SessionStateSerializer:
             "answers": data.get("answers", {}),
             "started_at": data.get("started_at"),
             "last_activity": data.get("last_activity"),
-            "status": data.get("status", "active")
+            "status": data.get("status", "active"),
         }
 
 
@@ -179,7 +176,7 @@ class MCPSessionHandler:
         self.comm = communicator
         self.state = {}
 
-    def handle_command(self, message: Dict[str, Any]) -> bool:
+    def handle_command(self, message: dict[str, Any]) -> bool:
         """
         Handle an MCP command message.
 
@@ -215,7 +212,7 @@ class MCPSessionHandler:
             self.comm.send_error(str(e), error_code="COMMAND_FAILED")
             return True
 
-    def _handle_init(self, message: Dict[str, Any]) -> bool:
+    def _handle_init(self, message: dict[str, Any]) -> bool:
         """Handle session initialization."""
         data = message.get("data", {})
 
@@ -229,7 +226,7 @@ class MCPSessionHandler:
             "current_question_index": 0,
             "answers": {},
             "started_at": datetime.utcnow().isoformat() + "Z",
-            "status": "active"
+            "status": "active",
         }
 
         self.comm.session_id = self.state["session_id"]
@@ -239,7 +236,7 @@ class MCPSessionHandler:
 
         return True
 
-    def _handle_answer(self, message: Dict[str, Any]) -> bool:
+    def _handle_answer(self, message: dict[str, Any]) -> bool:
         """Handle answer submission."""
         data = message.get("data", {})
 
@@ -259,27 +256,23 @@ class MCPSessionHandler:
 
         return True
 
-    def _handle_get_state(self, message: Dict[str, Any]) -> bool:
+    def _handle_get_state(self, message: dict[str, Any]) -> bool:
         """Handle state query."""
         self.comm.send_state(SessionStateSerializer.serialize(self.state))
         return True
 
-    def _handle_complete(self, message: Dict[str, Any]) -> bool:
+    def _handle_complete(self, message: dict[str, Any]) -> bool:
         """Handle session completion."""
         self.state["status"] = "completed"
-        self.comm.send_response({
-            "status": "completed",
-            "message": "Reflection session completed successfully"
-        })
+        self.comm.send_response(
+            {"status": "completed", "message": "Reflection session completed successfully"}
+        )
         return False  # Exit after completion
 
-    def _handle_cancel(self, message: Dict[str, Any]) -> bool:
+    def _handle_cancel(self, message: dict[str, Any]) -> bool:
         """Handle session cancellation."""
         self.state["status"] = "cancelled"
-        self.comm.send_response({
-            "status": "cancelled",
-            "message": "Reflection session cancelled"
-        })
+        self.comm.send_response({"status": "cancelled", "message": "Reflection session cancelled"})
         return False  # Exit after cancellation
 
 

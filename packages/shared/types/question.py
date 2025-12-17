@@ -5,9 +5,9 @@ This module defines the structure of reflection questions, their types,
 and how they are organized into question sets.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional, Any, Callable
+from typing import Any, Callable, Optional
 
 
 class QuestionType(str, Enum):
@@ -16,13 +16,14 @@ class QuestionType(str, Enum):
 
     Each type may have different validation rules and UI presentation.
     """
-    TEXT = "text"              # Free-form text response
-    MULTILINE = "multiline"    # Multi-line text response
-    RATING = "rating"          # Numeric rating (e.g., 1-5)
-    CHOICE = "choice"          # Single choice from options
+
+    TEXT = "text"  # Free-form text response
+    MULTILINE = "multiline"  # Multi-line text response
+    RATING = "rating"  # Numeric rating (e.g., 1-5)
+    CHOICE = "choice"  # Single choice from options
     MULTICHOICE = "multichoice"  # Multiple choices from options
-    BOOLEAN = "boolean"        # Yes/No question
-    SCALE = "scale"            # Scaled response (e.g., 1-10)
+    BOOLEAN = "boolean"  # Yes/No question
+    SCALE = "scale"  # Scaled response (e.g., 1-10)
 
     def __str__(self) -> str:
         """Return the string value of the enum."""
@@ -55,6 +56,7 @@ class Question:
         conditional: Optional function to determine if question should be shown
         metadata: Additional metadata about the question
     """
+
     id: str
     text: str
     question_type: QuestionType = QuestionType.TEXT
@@ -62,13 +64,13 @@ class Question:
     help_text: Optional[str] = None
     placeholder: Optional[str] = None
     default_value: Optional[Any] = None
-    validation_rules: Optional[Dict[str, Any]] = None
-    options: Optional[List[str]] = None
+    validation_rules: Optional[dict[str, Any]] = None
+    options: Optional[list[str]] = None
     min_value: Optional[int] = None
     max_value: Optional[int] = None
     order: int = 0
     conditional: Optional[Callable[..., bool]] = None
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: Optional[dict[str, Any]] = None
 
     def __post_init__(self):
         """Validate question configuration."""
@@ -88,11 +90,13 @@ class Question:
 
         if self.question_type in (QuestionType.RATING, QuestionType.SCALE):
             if self.min_value is None or self.max_value is None:
-                raise ValueError(f"Question {self.id}: {self.question_type} requires min_value and max_value")
+                raise ValueError(
+                    f"Question {self.id}: {self.question_type} requires min_value and max_value"
+                )
             if self.min_value >= self.max_value:
                 raise ValueError(f"Question {self.id}: min_value must be less than max_value")
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert question to dictionary for serialization."""
         result = {
             "id": self.id,
@@ -123,7 +127,7 @@ class Question:
         return result
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Question":
+    def from_dict(cls, data: dict[str, Any]) -> "Question":
         """Create question from dictionary representation."""
         # Remove conditional field if present (not serializable)
         data = data.copy()
@@ -177,7 +181,10 @@ class Question:
                 if num_answer < self.min_value or num_answer > self.max_value:
                     return False, f"Answer must be between {self.min_value} and {self.max_value}"
             except (ValueError, TypeError):
-                return False, f"Answer must be a number between {self.min_value} and {self.max_value}"
+                return (
+                    False,
+                    f"Answer must be a number between {self.min_value} and {self.max_value}",
+                )
 
         elif self.question_type == QuestionType.BOOLEAN:
             if answer not in [True, False, "yes", "no", "y", "n", "true", "false"]:
@@ -196,12 +203,13 @@ class Question:
             pattern = self.validation_rules.get("pattern")
             if pattern:
                 import re
+
                 if not re.match(pattern, str(answer)):
                     return False, "Answer format is invalid"
 
         return True, None
 
-    def should_ask(self, context: Dict[str, Any]) -> bool:
+    def should_ask(self, context: dict[str, Any]) -> bool:
         """
         Determine if this question should be asked based on conditional logic.
 
@@ -227,12 +235,13 @@ class QuestionConfig:
         additional_questions: Questions to add to the default set
         question_order: Custom ordering of question IDs
     """
-    custom_questions: Optional[List[Question]] = None
-    skip_questions: Optional[List[str]] = None
-    additional_questions: Optional[List[Question]] = None
-    question_order: Optional[List[str]] = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    custom_questions: Optional[list[Question]] = None
+    skip_questions: Optional[list[str]] = None
+    additional_questions: Optional[list[Question]] = None
+    question_order: Optional[list[str]] = None
+
+    def to_dict(self) -> dict[str, Any]:
         """Convert config to dictionary for serialization."""
         result = {}
         if self.custom_questions:
@@ -261,9 +270,13 @@ class QuestionConfig:
 
         # Handle full dict format
         return cls(
-            custom_questions=[Question.from_dict(q) for q in data.get("custom_questions", [])] or None,
+            custom_questions=[Question.from_dict(q) for q in data.get("custom_questions", [])]
+            or None,
             skip_questions=data.get("skip_questions"),
-            additional_questions=[Question.from_dict(q) for q in data.get("additional_questions", [])] or None,
+            additional_questions=[
+                Question.from_dict(q) for q in data.get("additional_questions", [])
+            ]
+            or None,
             question_order=data.get("question_order"),
         )
 
@@ -280,17 +293,18 @@ class QuestionSet:
         version: Version of the question set
         metadata: Additional metadata
     """
+
     name: str
-    questions: List[Question]
+    questions: list[Question]
     description: Optional[str] = None
     version: str = "1.0"
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: Optional[dict[str, Any]] = None
 
     def __post_init__(self):
         """Sort questions by order."""
         self.questions.sort(key=lambda q: q.order)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert question set to dictionary for serialization."""
         result = {
             "name": self.name,
@@ -304,7 +318,7 @@ class QuestionSet:
         return result
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "QuestionSet":
+    def from_dict(cls, data: dict[str, Any]) -> "QuestionSet":
         """Create question set from dictionary representation."""
         return cls(
             name=data["name"],
@@ -321,7 +335,7 @@ class QuestionSet:
                 return question
         return None
 
-    def get_questions_for_context(self, context: Dict[str, Any]) -> List[Question]:
+    def get_questions_for_context(self, context: dict[str, Any]) -> list[Question]:
         """
         Get questions that should be asked based on context.
 
@@ -329,7 +343,7 @@ class QuestionSet:
         """
         return [q for q in self.questions if q.should_ask(context)]
 
-    def validate_all_answers(self, answers: Dict[str, Any]) -> Dict[str, Optional[str]]:
+    def validate_all_answers(self, answers: dict[str, Any]) -> dict[str, Optional[str]]:
         """
         Validate all answers against their questions.
 
@@ -367,7 +381,7 @@ def create_default_question_set() -> QuestionSet:
                     "Tests",
                     "Docs",
                     "DevOps/infra/tooling",
-                    "Other"
+                    "Other",
                 ],
                 help_text="Select the category that best describes this commit",
                 order=1,
@@ -428,10 +442,11 @@ def create_default_question_set() -> QuestionSet:
                     "Tools/environment/infra issues",
                     "Codebase complexity/architecture confusion",
                     "My own clarity/changing direction",
-                    "Other"
+                    "Other",
                 ],
                 help_text="Select all that apply (or skip if no blockers)",
                 order=7,
+                metadata={"allow_other_text": True},
             ),
             Question(
                 id="learning",
@@ -461,10 +476,12 @@ def create_default_question_set() -> QuestionSet:
                     "Partial progress",
                     "Unblocks something else",
                     "Spike",
-                    "Fixed fallout from earlier changes"
+                    "Fixed fallout from earlier changes",
+                    "Other",
                 ],
                 help_text="What did this commit accomplish?",
                 order=10,
+                metadata={"allow_other_text": True},
             ),
         ],
     )

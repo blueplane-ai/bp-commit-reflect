@@ -7,18 +7,18 @@ tracking, timeout handling, and cleanup.
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
-from typing import Dict, Optional, Any
-from uuid import UUID, uuid4
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 from enum import Enum
-
+from typing import Any
+from uuid import UUID, uuid4
 
 logger = logging.getLogger(__name__)
 
 
 class SessionState(str, Enum):
     """States a reflection session can be in."""
+
     INITIALIZING = "initializing"
     ACTIVE = "active"
     COMPLETED = "completed"
@@ -44,16 +44,17 @@ class Session:
         timeout_seconds: Session timeout in seconds
         metadata: Additional session metadata
     """
+
     session_id: UUID
     state: SessionState
     created_at: datetime
     last_activity: datetime
-    commit_hash: Optional[str] = None
-    project_name: Optional[str] = None
-    cli_process: Optional[asyncio.subprocess.Process] = None
+    commit_hash: str | None = None
+    project_name: str | None = None
+    cli_process: asyncio.subprocess.Process | None = None
     current_question_index: int = 0
     timeout_seconds: int = 1800  # 30 minutes default
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def update_activity(self):
         """Update the last activity timestamp."""
@@ -71,7 +72,7 @@ class Session:
         """Check if the session is in an active state."""
         return self.state in (SessionState.INITIALIZING, SessionState.ACTIVE)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert session to dictionary representation."""
         return {
             "session_id": str(self.session_id),
@@ -98,7 +99,7 @@ class SessionManager:
         self,
         max_concurrent_sessions: int = 10,
         default_timeout: int = 1800,
-        cleanup_interval: int = 300
+        cleanup_interval: int = 300,
     ):
         """
         Initialize the session manager.
@@ -112,8 +113,8 @@ class SessionManager:
         self.default_timeout = default_timeout
         self.cleanup_interval = cleanup_interval
 
-        self.sessions: Dict[UUID, Session] = {}
-        self._cleanup_task: Optional[asyncio.Task] = None
+        self.sessions: dict[UUID, Session] = {}
+        self._cleanup_task: asyncio.Task | None = None
         self._running = False
 
     async def start(self):
@@ -148,9 +149,9 @@ class SessionManager:
     async def create_session(
         self,
         commit_hash: str,
-        project_name: Optional[str] = None,
-        timeout_seconds: Optional[int] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        project_name: str | None = None,
+        timeout_seconds: int | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> Session:
         """
         Create a new reflection session.
@@ -194,7 +195,7 @@ class SessionManager:
 
         return session
 
-    async def get_session(self, session_id: UUID) -> Optional[Session]:
+    async def get_session(self, session_id: UUID) -> Session | None:
         """
         Get a session by ID.
 
@@ -216,7 +217,7 @@ class SessionManager:
         self,
         session_id: UUID,
         new_state: SessionState,
-        metadata_updates: Optional[Dict[str, Any]] = None
+        metadata_updates: dict[str, Any] | None = None,
     ) -> bool:
         """
         Update the state of a session.
@@ -299,7 +300,7 @@ class SessionManager:
 
         return active_sessions
 
-    async def get_session_count(self) -> Dict[str, int]:
+    async def get_session_count(self) -> dict[str, int]:
         """
         Get count of sessions by state.
 
@@ -315,7 +316,9 @@ class SessionManager:
                 counts[session.state.value] += 1
 
         counts["total"] = len(self.sessions)
-        counts["active"] = counts[SessionState.INITIALIZING.value] + counts[SessionState.ACTIVE.value]
+        counts["active"] = (
+            counts[SessionState.INITIALIZING.value] + counts[SessionState.ACTIVE.value]
+        )
 
         return counts
 
@@ -345,7 +348,11 @@ class SessionManager:
                 await self._timeout_session(session)
 
             # Remove old completed/cancelled sessions
-            if session.state in (SessionState.COMPLETED, SessionState.CANCELLED, SessionState.TIMED_OUT):
+            if session.state in (
+                SessionState.COMPLETED,
+                SessionState.CANCELLED,
+                SessionState.TIMED_OUT,
+            ):
                 age = now - session.last_activity
                 if age > stale_threshold:
                     sessions_to_remove.append(session_id)

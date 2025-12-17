@@ -1,0 +1,47 @@
+#!/bin/sh
+#
+# post-commit hook for commit-reflect REPL integration
+# Sends commit notification to REPL server (fails silently if not running)
+#
+# Usage:
+#   1. Copy to .git/hooks/post-commit in your repo
+#   2. Or run: commit-reflect install-hook [--repo /path/to/repo]
+#
+# Configuration via environment variables:
+#   COMMIT_REFLECT_PORT - Port for REPL server (default: 9123)
+#   COMMIT_REFLECT_HOST - Host for REPL server (default: 127.0.0.1)
+#
+
+# Configuration
+REPL_PORT="${COMMIT_REFLECT_PORT:-9123}"
+REPL_HOST="${COMMIT_REFLECT_HOST:-127.0.0.1}"
+TIMEOUT=2
+
+# Get the repository root (where this hook is running)
+# This works whether called directly or via git
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"
+if [ -z "$REPO_ROOT" ]; then
+    # Fallback: use the directory containing .git
+    SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+    REPO_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
+fi
+
+# Get commit information
+COMMIT_HASH=$(git -C "$REPO_ROOT" rev-parse HEAD 2>/dev/null)
+PROJECT=$(basename "$REPO_ROOT")
+BRANCH=$(git -C "$REPO_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+
+# Skip if we couldn't get commit info
+if [ -z "$COMMIT_HASH" ]; then
+    exit 0
+fi
+
+# Attempt to notify REPL server
+# Fails silently if server is not running (don't block commit)
+curl -s --max-time "$TIMEOUT" \
+    -X POST "http://${REPL_HOST}:${REPL_PORT}/commit" \
+    -d "hash=${COMMIT_HASH}&project=${PROJECT}&branch=${BRANCH}&repo_path=${REPO_ROOT}" \
+    >/dev/null 2>&1 || true
+
+# Always exit successfully to not block the commit
+exit 0

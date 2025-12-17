@@ -7,7 +7,8 @@ multiple storage backends.
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Set
+from typing import Optional
+
 from shared.types.storage import StorageBackend
 
 
@@ -26,9 +27,9 @@ class ConsistencyCheckResult:
 
     is_consistent: bool
     total_records_checked: int
-    inconsistencies: List[Dict]
+    inconsistencies: list[dict]
     timestamp: datetime
-    backends_checked: List[str]
+    backends_checked: list[str]
 
 
 class ConsistencyVerifier:
@@ -41,7 +42,7 @@ class ConsistencyVerifier:
     - Corrupted data
     """
 
-    def __init__(self, backends: List[StorageBackend]):
+    def __init__(self, backends: list[StorageBackend]):
         """
         Initialize verifier with backend list.
 
@@ -118,9 +119,7 @@ class ConsistencyVerifier:
             try:
                 records = backend.read(limit=limit)
                 # Index by commit hash
-                backend_records[backend_type] = {
-                    r["commit_hash"]: r for r in records
-                }
+                backend_records[backend_type] = {r["commit_hash"]: r for r in records}
             except Exception as e:
                 inconsistencies.append(
                     {
@@ -141,7 +140,7 @@ class ConsistencyVerifier:
             )
 
         # Get all commit hashes across backends
-        all_hashes: Set[str] = set()
+        all_hashes: set[str] = set()
         for records in backend_records.values():
             all_hashes.update(records.keys())
 
@@ -197,9 +196,7 @@ class ConsistencyVerifier:
             backend_type = backend.get_type()
             try:
                 records = backend.read(limit=limit)
-                backend_records[backend_type] = {
-                    r["commit_hash"]: r for r in records
-                }
+                backend_records[backend_type] = {r["commit_hash"]: r for r in records}
             except Exception as e:
                 inconsistencies.append(
                     {
@@ -258,7 +255,7 @@ class ConsistencyVerifier:
 
     def verify_comprehensive(
         self, limit: Optional[int] = None
-    ) -> Dict[str, ConsistencyCheckResult]:
+    ) -> dict[str, ConsistencyCheckResult]:
         """
         Perform all consistency checks.
 
@@ -274,9 +271,7 @@ class ConsistencyVerifier:
             "data_integrity": self.verify_data_integrity(limit=limit),
         }
 
-    def get_summary(
-        self, results: Dict[str, ConsistencyCheckResult]
-    ) -> Dict[str, any]:
+    def get_summary(self, results: dict[str, ConsistencyCheckResult]) -> dict[str, any]:
         """
         Get summary of consistency check results.
 
@@ -286,9 +281,7 @@ class ConsistencyVerifier:
         Returns:
             Summary dictionary with overall status
         """
-        total_inconsistencies = sum(
-            len(result.inconsistencies) for result in results.values()
-        )
+        total_inconsistencies = sum(len(result.inconsistencies) for result in results.values())
 
         is_consistent = all(result.is_consistent for result in results.values())
 
@@ -297,8 +290,8 @@ class ConsistencyVerifier:
             "total_checks": len(results),
             "passed_checks": sum(1 for r in results.values() if r.is_consistent),
             "total_inconsistencies": total_inconsistencies,
-            "backends_checked": results[list(results.keys())[0]].backends_checked
-            if results
-            else [],
+            "backends_checked": (
+                results[list(results.keys())[0]].backends_checked if results else []
+            ),
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }

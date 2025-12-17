@@ -1,15 +1,15 @@
 """Base storage backend interface."""
 
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional
 from datetime import datetime
+from typing import Any, Optional
 
 
 class StorageBackend(ABC):
     """Abstract base class for storage backends."""
 
     @abstractmethod
-    def write(self, reflection: Dict[str, Any]) -> bool:
+    def write(self, reflection: dict[str, Any]) -> bool:
         """
         Write a reflection to storage.
 
@@ -23,11 +23,8 @@ class StorageBackend(ABC):
 
     @abstractmethod
     def read_recent(
-        self,
-        limit: int = 10,
-        project: Optional[str] = None,
-        since: Optional[datetime] = None
-    ) -> List[Dict[str, Any]]:
+        self, limit: int = 10, project: Optional[str] = None, since: Optional[datetime] = None
+    ) -> list[dict[str, Any]]:
         """
         Read recent reflections from storage.
 

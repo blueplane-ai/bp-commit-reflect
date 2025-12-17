@@ -1,9 +1,9 @@
 """Data migration utilities for reflection data."""
 
 import json
-from pathlib import Path
-from typing import List, Dict, Any, Optional
 from datetime import datetime
+from pathlib import Path
+from typing import Any
 
 
 class DataMigrator:
@@ -18,12 +18,7 @@ class DataMigrator:
             "jsonl_to_sqlite": self._migrate_jsonl_to_sqlite,
         }
 
-    def migrate(
-        self,
-        source: str,
-        destination: str,
-        migration_type: str
-    ) -> Dict[str, Any]:
+    def migrate(self, source: str, destination: str, migration_type: str) -> dict[str, Any]:
         """
         Migrate data from source to destination.
 
@@ -41,7 +36,7 @@ class DataMigrator:
 
         return migration_func(source, destination)
 
-    def _migrate_v1_to_v2(self, source: str, destination: str) -> Dict[str, Any]:
+    def _migrate_v1_to_v2(self, source: str, destination: str) -> dict[str, Any]:
         """
         Migrate from v1 to v2 format.
 
@@ -62,7 +57,7 @@ class DataMigrator:
         error_count = 0
 
         with open(dest_path, "w", encoding="utf-8") as dest_file:
-            with open(source_path, "r", encoding="utf-8") as source_file:
+            with open(source_path, encoding="utf-8") as source_file:
                 for line_num, line in enumerate(source_file, 1):
                     try:
                         # Parse v1 record
@@ -81,8 +76,8 @@ class DataMigrator:
                             "metadata": {
                                 "migrated_at": datetime.utcnow().isoformat() + "Z",
                                 "source_version": "1.0",
-                                "original_line": line_num
-                            }
+                                "original_line": line_num,
+                            },
                         }
 
                         # Write v2 record
@@ -101,14 +96,10 @@ class DataMigrator:
             "destination": str(dest_path),
             "migrated_count": migrated_count,
             "error_count": error_count,
-            "completed_at": datetime.utcnow().isoformat() + "Z"
+            "completed_at": datetime.utcnow().isoformat() + "Z",
         }
 
-    def _migrate_jsonl_to_sqlite(
-        self,
-        source: str,
-        destination: str
-    ) -> Dict[str, Any]:
+    def _migrate_jsonl_to_sqlite(self, source: str, destination: str) -> dict[str, Any]:
         """
         Migrate from JSONL to SQLite database.
 
@@ -130,7 +121,7 @@ class DataMigrator:
         try:
             # Read JSONL records
             reflections = []
-            with open(source_path, "r", encoding="utf-8") as f:
+            with open(source_path, encoding="utf-8") as f:
                 for line in f:
                     try:
                         reflections.append(json.loads(line.strip()))
@@ -157,15 +148,12 @@ class DataMigrator:
             "destination": destination,
             "migrated_count": migrated_count,
             "error_count": error_count,
-            "completed_at": datetime.utcnow().isoformat() + "Z"
+            "completed_at": datetime.utcnow().isoformat() + "Z",
         }
 
     def validate_migration(
-        self,
-        source: str,
-        destination: str,
-        sample_size: int = 100
-    ) -> Dict[str, Any]:
+        self, source: str, destination: str, sample_size: int = 100
+    ) -> dict[str, Any]:
         """
         Validate migration by comparing samples.
 
@@ -186,7 +174,7 @@ class DataMigrator:
 
         # Compare data integrity
         data_matches = 0
-        for src, dst in zip(source_samples, dest_samples):
+        for src, dst in zip(source_samples, dest_samples, strict=False):
             if self._records_match(src, dst):
                 data_matches += 1
 
@@ -196,16 +184,16 @@ class DataMigrator:
             "count_match": count_match,
             "data_matches": data_matches,
             "sample_size": sample_size,
-            "validation_passed": count_match and data_matches == len(source_samples)
+            "validation_passed": count_match and data_matches == len(source_samples),
         }
 
-    def _load_samples(self, filepath: str, count: int) -> List[Dict[str, Any]]:
+    def _load_samples(self, filepath: str, count: int) -> list[dict[str, Any]]:
         """Load sample records from file."""
         path = Path(filepath).expanduser()
         samples = []
 
         try:
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 for i, line in enumerate(f):
                     if i >= count:
                         break
@@ -218,7 +206,7 @@ class DataMigrator:
 
         return samples
 
-    def _records_match(self, record1: Dict[str, Any], record2: Dict[str, Any]) -> bool:
+    def _records_match(self, record1: dict[str, Any], record2: dict[str, Any]) -> bool:
         """Check if two records match (ignoring metadata)."""
         # Compare key fields
         key_fields = ["project", "commit_hash", "timestamp"]
@@ -240,11 +228,8 @@ class BatchProcessor:
         pass
 
     def batch_export(
-        self,
-        reflections: List[Dict[str, Any]],
-        output_path: str,
-        format: str = "jsonl"
-    ) -> Dict[str, Any]:
+        self, reflections: list[dict[str, Any]], output_path: str, format: str = "jsonl"
+    ) -> dict[str, Any]:
         """
         Export reflections to file in batch.
 
@@ -267,11 +252,7 @@ class BatchProcessor:
         else:
             raise ValueError(f"Unsupported format: {format}")
 
-    def _export_jsonl(
-        self,
-        reflections: List[Dict[str, Any]],
-        output_path: Path
-    ) -> Dict[str, Any]:
+    def _export_jsonl(self, reflections: list[dict[str, Any]], output_path: Path) -> dict[str, Any]:
         """Export to JSONL format."""
         count = 0
 
@@ -281,32 +262,16 @@ class BatchProcessor:
                 f.write("\n")
                 count += 1
 
-        return {
-            "format": "jsonl",
-            "output": str(output_path),
-            "count": count
-        }
+        return {"format": "jsonl", "output": str(output_path), "count": count}
 
-    def _export_json(
-        self,
-        reflections: List[Dict[str, Any]],
-        output_path: Path
-    ) -> Dict[str, Any]:
+    def _export_json(self, reflections: list[dict[str, Any]], output_path: Path) -> dict[str, Any]:
         """Export to JSON array format."""
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(reflections, f, indent=2, ensure_ascii=False)
 
-        return {
-            "format": "json",
-            "output": str(output_path),
-            "count": len(reflections)
-        }
+        return {"format": "json", "output": str(output_path), "count": len(reflections)}
 
-    def _export_csv(
-        self,
-        reflections: List[Dict[str, Any]],
-        output_path: Path
-    ) -> Dict[str, Any]:
+    def _export_csv(self, reflections: list[dict[str, Any]], output_path: Path) -> dict[str, Any]:
         """Export to CSV format."""
         import csv
 
@@ -315,8 +280,15 @@ class BatchProcessor:
 
         # Determine columns
         columns = [
-            "timestamp", "project", "branch", "commit_hash",
-            "ai_synergy", "confidence", "experience", "blockers", "learning"
+            "timestamp",
+            "project",
+            "branch",
+            "commit_hash",
+            "ai_synergy",
+            "confidence",
+            "experience",
+            "blockers",
+            "learning",
         ]
 
         count = 0
@@ -335,19 +307,17 @@ class BatchProcessor:
 
                 # Extract reflection fields
                 refl = reflection.get("reflections", {})
-                row.update({
-                    "ai_synergy": refl.get("ai_synergy"),
-                    "confidence": refl.get("confidence"),
-                    "experience": refl.get("experience"),
-                    "blockers": refl.get("blockers"),
-                    "learning": refl.get("learning"),
-                })
+                row.update(
+                    {
+                        "ai_synergy": refl.get("ai_synergy"),
+                        "confidence": refl.get("confidence"),
+                        "experience": refl.get("experience"),
+                        "blockers": refl.get("blockers"),
+                        "learning": refl.get("learning"),
+                    }
+                )
 
                 writer.writerow(row)
                 count += 1
 
-        return {
-            "format": "csv",
-            "output": str(output_path),
-            "count": count
-        }
+        return {"format": "csv", "output": str(output_path), "count": count}

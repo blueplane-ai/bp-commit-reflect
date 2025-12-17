@@ -8,7 +8,7 @@ Tests the Question data model including:
 """
 
 import pytest
-from shared.types.question import Question, QuestionType, QuestionConfig, QuestionSet
+from shared.types.question import Question, QuestionType
 
 
 class TestQuestion:

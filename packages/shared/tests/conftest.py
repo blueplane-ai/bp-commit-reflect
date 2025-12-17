@@ -6,14 +6,11 @@ including mock commits, storage backends, and test data generators.
 """
 
 import json
-import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List
 from unittest.mock import Mock
 
 import pytest
-
 
 # ============================================================================
 # Mock Commit Fixtures
@@ -21,7 +18,7 @@ import pytest
 
 
 @pytest.fixture
-def mock_commit_metadata() -> Dict:
+def mock_commit_metadata() -> dict:
     """
     Basic mock commit metadata for testing.
 
@@ -41,7 +38,7 @@ def mock_commit_metadata() -> Dict:
 
 
 @pytest.fixture
-def mock_commit_with_stats() -> Dict:
+def mock_commit_with_stats() -> dict:
     """
     Mock commit with detailed statistics.
 
@@ -64,7 +61,7 @@ def mock_commit_with_stats() -> Dict:
 
 
 @pytest.fixture
-def mock_large_commit() -> Dict:
+def mock_large_commit() -> dict:
     """
     Mock commit representing a large refactoring change.
 
@@ -88,7 +85,7 @@ def mock_large_commit() -> Dict:
 
 
 @pytest.fixture
-def sample_reflection() -> Dict:
+def sample_reflection() -> dict:
     """
     Sample complete reflection with all required fields.
 
@@ -113,7 +110,7 @@ def sample_reflection() -> Dict:
 
 
 @pytest.fixture
-def partial_reflection() -> Dict:
+def partial_reflection() -> dict:
     """
     Partial reflection with only some fields completed.
 
@@ -165,7 +162,7 @@ def temp_sqlite_db(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def jsonl_with_sample_data(temp_jsonl_file: Path, sample_reflection: Dict) -> Path:
+def jsonl_with_sample_data(temp_jsonl_file: Path, sample_reflection: dict) -> Path:
     """
     JSONL file pre-populated with sample reflection data.
 
@@ -188,7 +185,7 @@ def jsonl_with_sample_data(temp_jsonl_file: Path, sample_reflection: Dict) -> Pa
 
 
 @pytest.fixture
-def minimal_config() -> Dict:
+def minimal_config() -> dict:
     """
     Minimal valid configuration for testing.
 
@@ -196,9 +193,7 @@ def minimal_config() -> Dict:
     to run the commit reflection system.
     """
     return {
-        "storage_backends": [
-            {"backend_type": "jsonl", "path": "reflections.jsonl"}
-        ],
+        "storage_backends": [{"backend_type": "jsonl", "path": "reflections.jsonl"}],
         "questions": [
             {"id": "what", "text": "What changed?", "type": "text"},
             {"id": "why", "text": "Why did it change?", "type": "text"},
@@ -207,7 +202,7 @@ def minimal_config() -> Dict:
 
 
 @pytest.fixture
-def full_config(tmp_path: Path) -> Dict:
+def full_config(tmp_path: Path) -> dict:
     """
     Full configuration with all optional fields.
 
@@ -281,7 +276,7 @@ def generate_reflections():
     unique commit hashes and varying content.
     """
 
-    def _generate(count: int = 5) -> List[Dict]:
+    def _generate(count: int = 5) -> list[dict]:
         reflections = []
         for i in range(count):
             reflection = {
@@ -306,7 +301,7 @@ def generate_commit_metadata():
     with realistic data.
     """
 
-    def _generate(count: int = 5) -> List[Dict]:
+    def _generate(count: int = 5) -> list[dict]:
         commits = []
         for i in range(count):
             commit = {
@@ -333,10 +328,11 @@ def sample_reflection_object():
     Returns a complete Reflection object with all required fields.
     """
     from uuid import uuid4
+
     from shared.types.reflection import (
+        CommitContext,
         Reflection,
         ReflectionAnswer,
-        CommitContext,
         SessionMetadata,
     )
 

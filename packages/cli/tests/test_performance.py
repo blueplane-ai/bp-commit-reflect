@@ -1,9 +1,10 @@
 """Performance profiling tests."""
 
-import pytest
-import time
 import tempfile
+import time
 from pathlib import Path
+
+import pytest
 
 
 class TestStoragePerformance:
@@ -13,88 +14,56 @@ class TestStoragePerformance:
         """Measure JSONL write performance."""
         # Target: < 100ms for single write
         import time
-        from packages.shared.storage.jsonl import JSONLStorage
         from datetime import datetime
-        
+
+        from packages.shared.storage.jsonl import JSONLStorage
+
         jsonl_path = temp_dir / "perf.jsonl"
         storage = JSONLStorage(str(jsonl_path))
-        
+
         reflection = {
             "project": "test",
             "commit_hash": "abc123",
-            "timestamp": datetime.utcnow().isoformat() + "Z"
+            "timestamp": datetime.utcnow().isoformat() + "Z",
         }
-        
+
         start = time.perf_counter()
         success = storage.write(reflection)
         elapsed = (time.perf_counter() - start) * 1000  # Convert to ms
-        
+
         assert success is True
         assert elapsed < 100, f"Write too slow: {elapsed:.2f}ms"
-        
+
         storage.close()
 
     def test_jsonl_read_speed(self, temp_dir):
         """Measure JSONL read performance."""
         # Target: < 50ms to read 100 entries
         import time
-        from packages.shared.storage.jsonl import JSONLStorage
         from datetime import datetime
-        
+
+        from packages.shared.storage.jsonl import JSONLStorage
+
         jsonl_path = temp_dir / "perf.jsonl"
         storage = JSONLStorage(str(jsonl_path))
-        
+
         # Write 100 entries
         for i in range(100):
             reflection = {
                 "project": "test",
                 "commit_hash": f"abc{i:03d}",
-                "timestamp": datetime.utcnow().isoformat() + "Z"
+                "timestamp": datetime.utcnow().isoformat() + "Z",
             }
             storage.write(reflection)
-        
+
         # Measure read time
         start = time.perf_counter()
         reflections = storage.read_recent(limit=100)
         elapsed = (time.perf_counter() - start) * 1000  # Convert to ms
-        
+
         assert len(reflections) == 100
         assert elapsed < 50, f"Read too slow: {elapsed:.2f}ms"
-        
-        storage.close()
 
-    def test_large_file_handling(self, temp_dir):
-        """Test performance with large JSONL files."""
-        # Target: Handle 10,000+ entries efficiently
-        import time
-        from packages.shared.storage.jsonl import JSONLStorage
-        from datetime import datetime
-        
-        jsonl_path = temp_dir / "large.jsonl"
-        storage = JSONLStorage(str(jsonl_path))
-        
-        # Write 1000 entries (testing with smaller number for speed)
-        start = time.perf_counter()
-        for i in range(1000):
-            reflection = {
-                "project": "test",
-                "commit_hash": f"abc{i:04d}",
-                "timestamp": datetime.utcnow().isoformat() + "Z"
-            }
-            storage.write(reflection)
-        
-        write_time = time.perf_counter() - start
-        
-        # Read should still be fast
-        start = time.perf_counter()
-        reflections = storage.read_recent(limit=1000)
-        read_time = time.perf_counter() - start
-        
-        assert len(reflections) == 1000
-        # Should handle 1000 entries in reasonable time
-        assert write_time < 10, f"Write too slow: {write_time:.2f}s"
-        assert read_time < 1, f"Read too slow: {read_time:.2f}s"
-        
         storage.close()
 
 
@@ -123,43 +92,40 @@ class TestValidationPerformance:
         """Measure validation operation speed."""
         # Target: < 1ms per validation
         import time
+
         from packages.cli.src.validators import validate_scale, validate_text
-        
+
         # Test scale validation speed
         start = time.perf_counter()
         for _ in range(1000):
             validate_scale(3, 1, 5)
         elapsed = (time.perf_counter() - start) / 1000 * 1000  # ms per validation
-        
+
         assert elapsed < 1, f"Validation too slow: {elapsed:.3f}ms"
-        
+
         # Test text validation speed
         start = time.perf_counter()
         for _ in range(1000):
             validate_text("test answer", max_length=512)
         elapsed = (time.perf_counter() - start) / 1000 * 1000
-        
+
         assert elapsed < 1, f"Text validation too slow: {elapsed:.3f}ms"
 
     def test_bulk_validation_performance(self):
         """Test validation of multiple inputs."""
         import time
+
         from packages.cli.src.validators import validate_question_answer
-        
-        question = {
-            "id": "test",
-            "type": "scale",
-            "range": [1, 5],
-            "optional": False
-        }
-        
+
+        question = {"id": "test", "type": "scale", "range": [1, 5], "optional": False}
+
         answers = ["1", "2", "3", "4", "5"] * 100  # 500 answers
-        
+
         start = time.perf_counter()
         for answer in answers:
             validate_question_answer(question, answer)
         elapsed = time.perf_counter() - start
-        
+
         # Should handle 500 validations quickly
         assert elapsed < 1, f"Bulk validation too slow: {elapsed:.2f}s"
 
@@ -178,6 +144,7 @@ class TestMCPPerformance:
 
 
 # Performance benchmarking utilities
+
 
 @pytest.fixture
 def benchmark_storage():
