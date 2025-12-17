@@ -27,9 +27,7 @@ def create_parser() -> argparse.ArgumentParser:
         description="Capture reflections and AI synergy assessments at commit time",
     )
 
-    parser.add_argument(
-        "--version", "-V", action="version", version=f"%(prog)s {get_version()}"
-    )
+    parser.add_argument("--version", "-V", action="version", version=f"%(prog)s {get_version()}")
 
     # Create subparsers for commands
     subparsers = parser.add_subparsers(dest="command", help="Commands")
