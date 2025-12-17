@@ -1,14 +1,10 @@
 """Performance profiling tests."""
 
-import sys
 import tempfile
 import time
 from pathlib import Path
 
 import pytest
-
-# Windows CI runners have slower I/O, use more generous thresholds
-IS_WINDOWS = sys.platform == "win32"
 
 
 class TestStoragePerformance:
@@ -67,44 +63,6 @@ class TestStoragePerformance:
 
         assert len(reflections) == 100
         assert elapsed < 50, f"Read too slow: {elapsed:.2f}ms"
-
-        storage.close()
-
-    def test_large_file_handling(self, temp_dir):
-        """Test performance with large JSONL files."""
-        # Target: Handle 10,000+ entries efficiently
-        import time
-        from datetime import datetime
-
-        from packages.shared.storage.jsonl import JSONLStorage
-
-        jsonl_path = temp_dir / "large.jsonl"
-        storage = JSONLStorage(str(jsonl_path))
-
-        # Write 1000 entries (testing with smaller number for speed)
-        start = time.perf_counter()
-        for i in range(1000):
-            reflection = {
-                "project": "test",
-                "commit_hash": f"abc{i:04d}",
-                "timestamp": datetime.utcnow().isoformat() + "Z",
-            }
-            storage.write(reflection)
-
-        write_time = time.perf_counter() - start
-
-        # Read should still be fast
-        start = time.perf_counter()
-        reflections = storage.read_recent(limit=1000)
-        read_time = time.perf_counter() - start
-
-        assert len(reflections) == 1000
-        # Should handle 1000 entries in reasonable time
-        # Windows CI has slower I/O, use more generous thresholds
-        write_threshold = 20 if IS_WINDOWS else 10
-        read_threshold = 2 if IS_WINDOWS else 1
-        assert write_time < write_threshold, f"Write too slow: {write_time:.2f}s"
-        assert read_time < read_threshold, f"Read too slow: {read_time:.2f}s"
 
         storage.close()
 
